@@ -39,7 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    'hypertest.user'
+    'hypertest.user',
+    'hypertest.main',
 ]
 
 MIDDLEWARE = [
