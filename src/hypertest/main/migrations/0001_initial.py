@@ -31,7 +31,7 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
-            name='TestQuestion',
+            name='Question',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('question_id', models.IntegerField(verbose_name='Question ID')),
@@ -47,7 +47,7 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
-            name='TestResult',
+            name='Result',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('result_id', models.IntegerField(verbose_name='Result ID')),
@@ -63,13 +63,13 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
-            name='TestQuestionAnswer',
+            name='Answer',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('answer_id', models.IntegerField(verbose_name='Question Answer ID')),
                 ('text', models.CharField(max_length=255, verbose_name='Текст')),
-                ('question', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='answers', to='main.TestQuestion', verbose_name='Question')),
-                ('result', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='answers', to='main.TestResult', verbose_name='Result')),
+                ('question', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='answers', to='main.Question', verbose_name='Question')),
+                ('result', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='answers', to='main.Result', verbose_name='Result')),
             ],
             options={
                 'verbose_name': 'Test question answer',

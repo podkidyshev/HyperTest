@@ -1,14 +1,14 @@
 from django.contrib import admin
 
-from .models import Test, TestResult, TestQuestion
+from .models import Test, Result, Question
 
 
 class TestResultAdminInline(admin.TabularInline):
-    model = TestResult
+    model = Result
 
 
 class TestQuestionAdminInline(admin.TabularInline):
-    model = TestQuestion
+    model = Question
 
 
 class TestAdmin(admin.ModelAdmin):

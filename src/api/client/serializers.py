@@ -4,7 +4,15 @@ from django.db.models import Q
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from hypertest.main.models import Test, TestResult, TestQuestion, TestQuestionAnswer
+from hypertest.main.models import Test, Result, Question, Answer
+
+
+ID_ERROR_MESSAGES = {
+    'required': 'Это поле обязательно',
+    'incorrect_type': 'Некорректное значение первичного ключа, требуется целое число, получено {typ} = {val}',
+    'invalid': 'Некорректное значение первичного ключа, требуется целое число, получено {typ} = {val}',
+    'duplicates': 'Одинаковые {name} в одном родительском объекте'
+}
 
 
 def prettify_validation_error(err_detail):
@@ -33,11 +41,11 @@ class PictureField(serializers.ImageField):
         return super().to_internal_value(data)
 
 
-class TestQuestionAnswerSerializer(serializers.ModelSerializer):
+class AnswerSerializer(serializers.ModelSerializer):
     result_id = serializers.IntegerField(allow_null=True, write_only=True, required=True)
 
     class Meta:
-        model = TestQuestionAnswer
+        model = Answer
         fields = ['answer_id', 'result_id', 'text']
 
     def validate_result_id(self, result_id):
@@ -55,27 +63,21 @@ class TestQuestionAnswerSerializer(serializers.ModelSerializer):
         return data
 
 
-class TestQuestionAnswerListField(serializers.ListField):
-    id_error_messages = {
-        'required': 'Это поле обязательно',
-        'incorrect_type': 'Некорректное значение первичного ключа, требуется целое число, получено {typ} = {val}',
-        'invalid': 'Некорректное значение первичного ключа, требуется целое число, получено {typ} = {val}',
-        'duplicates': 'Одинаковые answer_id в одном объекте question'
-    }
+class AnswerListField(serializers.ListField):
     answer_id_field = serializers.IntegerField()
-    representation_serializer = TestQuestionAnswerSerializer()
+    representation_serializer = AnswerSerializer()
 
     def validate_answer_id(self, answer_id):
         try:
             answer_id = self.answer_id_field.to_internal_value(answer_id)
         except ValidationError:
-            msg = self.id_error_messages['incorrect_type'].format(typ=answer_id.__class__.__name__, val=answer_id)
+            msg = ID_ERROR_MESSAGES['incorrect_type'].format(typ=answer_id.__class__.__name__, val=answer_id)
             raise ValidationError({'answer_id': msg})
 
         if self.parent.instance is not None:
             try:
-                answer = TestQuestionAnswer.objects.get(answer_id=answer_id, question=self.parent.instance)
-            except TestQuestionAnswer.DoesNotExist:
+                answer = Answer.objects.get(answer_id=answer_id, question=self.parent.instance)
+            except Answer.DoesNotExist:
                 answer = None
         else:
             answer = None
@@ -84,11 +86,11 @@ class TestQuestionAnswerListField(serializers.ListField):
 
     def run_answer_validation(self, data):
         if 'answer_id' not in data:
-            raise ValidationError({'answer_id': self.id_error_messages['required']})
+            raise ValidationError({'answer_id': ID_ERROR_MESSAGES['required']})
 
         answer = self.validate_answer_id(data['answer_id'])
 
-        serializer = TestQuestionAnswerSerializer(instance=answer, data=data, context=self.root.context)
+        serializer = AnswerSerializer(instance=answer, data=data, context=self.root.context)
         serializer.parent = self.parent
         serializer.is_valid(True)
 
@@ -107,7 +109,7 @@ class TestQuestionAnswerListField(serializers.ListField):
                 # validate no result_id duplicates
                 answer_id = validated_answer.validated_data['answer_id']
                 if answer_id in answers_ids:
-                    errors[idx] = errors[answers_ids[answer_id]] = self.id_error_messages['duplicates']
+                    errors[idx] = errors[answers_ids[answer_id]] = ID_ERROR_MESSAGES['duplicates'].format(name='answer_id')
                     continue
                 answers_ids[answer_id] = idx
             except ValidationError as e:
@@ -123,35 +125,29 @@ class TestQuestionAnswerListField(serializers.ListField):
         return [self.representation_serializer.to_representation(item) for item in data.all()]
 
 
-class TestResultSerializer(serializers.ModelSerializer):
+class ResultSerializer(serializers.ModelSerializer):
     picture = PictureField(allow_null=True, default=None, required=False)
 
     class Meta:
-        model = TestResult
+        model = Result
         fields = ['result_id', 'text', 'picture']
 
 
-class TestResultListField(serializers.ListField):
-    id_error_messages = {
-        'required': 'Это поле обязательно',
-        'incorrect_type': 'Некорректное значение первичного ключа, требуется целое число, получено {typ} = {val}',
-        'invalid': 'Некорректное значение первичного ключа, требуется целое число, получено {typ} = {val}',
-        'duplicates': 'Одинаковые result_id в запросе'
-    }
+class ResultListField(serializers.ListField):
     result_id_field = serializers.IntegerField()
-    representation_serializer = TestResultSerializer()
+    representation_serializer = ResultSerializer()
 
     def validate_result_id(self, result_id):
         try:
             result_id = self.result_id_field.to_internal_value(result_id)
         except ValidationError:
-            msg = self.id_error_messages['incorrect_type'].format(typ=result_id.__class__.__name__, val=result_id)
+            msg = ID_ERROR_MESSAGES['incorrect_type'].format(typ=result_id.__class__.__name__, val=result_id)
             raise ValidationError({'result_id': msg})
 
         if self.root.instance is not None:
             try:
-                result = TestResult.objects.get(result_id=result_id, test=self.root.instance)
-            except TestResult.DoesNotExist:
+                result = Result.objects.get(result_id=result_id, test=self.root.instance)
+            except Result.DoesNotExist:
                 result = None
         else:
             result = None
@@ -160,11 +156,11 @@ class TestResultListField(serializers.ListField):
 
     def run_result_validation(self, data):
         if 'result_id' not in data:
-            raise ValidationError({'result_id': self.id_error_messages['required']})
+            raise ValidationError({'result_id': ID_ERROR_MESSAGES['required']})
 
         result = self.validate_result_id(data['result_id'])
 
-        serializer = TestResultSerializer(instance=result, data=data, context=self.root.context)
+        serializer = ResultSerializer(instance=result, data=data, context=self.root.context)
         serializer.parent = self
         serializer.is_valid(True)
 
@@ -183,7 +179,7 @@ class TestResultListField(serializers.ListField):
                 # validate no result_id duplicates
                 result_id = validated_result.validated_data['result_id']
                 if result_id in results_ids:
-                    errors[idx] = errors[results_ids[result_id]] = self.id_error_messages['duplicates']
+                    errors[idx] = errors[results_ids[result_id]] = ID_ERROR_MESSAGES['duplicates'].format(name='result_id')
                     continue
                 results_ids[result_id] = idx
             except ValidationError as e:
@@ -208,36 +204,30 @@ class TestResultListField(serializers.ListField):
         return [self.representation_serializer.to_representation(item) for item in data.all()]
 
 
-class TestQuestionSerializer(serializers.ModelSerializer):
+class QuestionSerializer(serializers.ModelSerializer):
     picture = PictureField(allow_null=True, default=None, required=False)
-    answers = TestQuestionAnswerListField()
+    answers = AnswerListField()
 
     class Meta:
-        model = TestQuestion
+        model = Question
         fields = ['question_id', 'text', 'picture', 'answers']
 
 
-class TestQuestionListField(serializers.ListField):
-    id_error_messages = {
-        'required': 'Это поле обязательно',
-        'incorrect_type': 'Некорректное значение первичного ключа, требуется целое число, получено {typ} = {val}',
-        'invalid': 'Некорректное значение первичного ключа, требуется целое число, получено {typ} = {val}',
-        'duplicates': 'Одинаковые question_id в запросе'
-    }
+class QuestionListField(serializers.ListField):
     question_id_field = serializers.IntegerField()
-    representation_serializer = TestQuestionSerializer()
+    representation_serializer = QuestionSerializer()
 
     def validate_result_id(self, question_id):
         try:
             question_id = self.question_id_field.to_internal_value(question_id)
         except ValidationError:
-            msg = self.id_error_messages['incorrect_type'].format(typ=question_id.__class__.__name__, val=question_id)
+            msg = ID_ERROR_MESSAGES['incorrect_type'].format(typ=question_id.__class__.__name__, val=question_id)
             raise ValidationError({'question_id': msg})
 
         if self.root.instance is not None:
             try:
-                question = TestQuestion.objects.get(question_id=question_id, test=self.root.instance)
-            except TestQuestion.DoesNotExist:
+                question = Question.objects.get(question_id=question_id, test=self.root.instance)
+            except Question.DoesNotExist:
                 question = None
         else:
             question = None
@@ -246,11 +236,11 @@ class TestQuestionListField(serializers.ListField):
 
     def run_question_validation(self, data):
         if 'question_id' not in data:
-            raise ValidationError({'question_id': self.id_error_messages['required']})
+            raise ValidationError({'question_id': ID_ERROR_MESSAGES['required']})
 
         question = self.validate_result_id(data['question_id'])
 
-        serializer = TestQuestionSerializer(instance=question, data=data, context=self.root.context)
+        serializer = QuestionSerializer(instance=question, data=data, context=self.root.context)
         serializer.parent = self
         serializer.is_valid(True)
 
@@ -269,7 +259,7 @@ class TestQuestionListField(serializers.ListField):
                 # validate no result_id duplicates
                 question_id = validated_question.validated_data['question_id']
                 if question_id in questions_ids:
-                    errors[idx] = errors[questions_ids[question_id]] = self.id_error_messages['duplicates']
+                    errors[idx] = errors[questions_ids[question_id]] = ID_ERROR_MESSAGES['duplicates'].format(name='question_id')
                     continue
                 questions_ids[question_id] = idx
             except ValidationError as e:
@@ -288,8 +278,8 @@ class TestQuestionListField(serializers.ListField):
 
 class TestSerializer(serializers.ModelSerializer):
     picture = PictureField(allow_null=True, default=None, required=False)
-    results = TestResultListField()
-    questions = TestQuestionListField()
+    results = ResultListField()
+    questions = QuestionListField()
 
     class Meta:
         model = Test
@@ -315,7 +305,7 @@ class TestSerializer(serializers.ModelSerializer):
 
         # manage results
         results_ids = [result.validated_data['result_id'] for result in results]
-        TestResult.objects.filter(~Q(id__in=results_ids), test=test).delete()
+        Result.objects.filter(~Q(id__in=results_ids), test=test).delete()
         results_objects = {}
         for result in results:
             result.validated_data['test'] = test
@@ -323,9 +313,8 @@ class TestSerializer(serializers.ModelSerializer):
             results_objects[result_obj.result_id] = result_obj
 
         # manage questions
-        # all_answers = list(chain(question.validated_data.pop('answers', []) for question in questions))
         questions_ids = [question.validated_data['question_id'] for question in questions]
-        TestQuestion.objects.filter(~Q(id__in=questions_ids), test=test).delete()
+        Question.objects.filter(~Q(id__in=questions_ids), test=test).delete()
         questions_objects = {}
         for question in questions:
             question.validated_data['test'] = test
@@ -336,7 +325,7 @@ class TestSerializer(serializers.ModelSerializer):
         # manage answers
         for question, answers in questions_objects.values():
             answer_ids = [answer.validated_data['answer_id'] for answer in answers]
-            TestQuestionAnswer.objects.filter(~Q(id__in=answer_ids), question=question).delete()
+            Answer.objects.filter(~Q(id__in=answer_ids), question=question).delete()
             for answer in answers:
                 answer.validated_data['question'] = question
                 if 'result_id' in answer.validated_data:

@@ -24,7 +24,7 @@ class Test(models.Model):
         verbose_name_plural = _('Tests')
 
 
-class TestResult(models.Model):
+class Result(models.Model):
     result_id = models.IntegerField(_('Result ID'))
     test = models.ForeignKey(verbose_name=_('Test'), to=Test, on_delete=models.CASCADE, related_name='results')
     text = models.CharField(_('Text'), max_length=255)
@@ -38,7 +38,7 @@ class TestResult(models.Model):
         unique_together = [['result_id', 'test']]
 
 
-class TestQuestion(models.Model):
+class Question(models.Model):
     question_id = models.IntegerField(_('Question ID'))
     test = models.ForeignKey(verbose_name=_('Test'), to=Test, on_delete=models.CASCADE, related_name='questions')
     text = models.CharField(_('Text'), max_length=255)
@@ -52,11 +52,11 @@ class TestQuestion(models.Model):
         unique_together = [['question_id', 'test']]
 
 
-class TestQuestionAnswer(models.Model):
+class Answer(models.Model):
     answer_id = models.IntegerField(_('Question Answer ID'))
-    question = models.ForeignKey(verbose_name=_('Question'), to=TestQuestion, related_name='answers',
+    question = models.ForeignKey(verbose_name=_('Question'), to=Question, related_name='answers',
                                  on_delete=models.CASCADE)
-    result = models.ForeignKey(verbose_name=_('Result'), to=TestResult, related_name='answers',
+    result = models.ForeignKey(verbose_name=_('Result'), to=Result, related_name='answers',
                                on_delete=models.SET_NULL, blank=True, null=True)
     text = models.CharField(_('Text'), max_length=255)
 
