@@ -330,7 +330,7 @@ class TestSerializer(serializers.ModelSerializer):
                 answer.validated_data['question'] = question
                 if 'result_id' in answer.validated_data:
                     result_id = answer.validated_data.pop('result_id')
-                    answer.validated_data['result'] = results_objects[result_id]
+                    answer.validated_data['result'] = results_objects[result_id] if result_id is not None else None
                 answer.save()
 
         return test
