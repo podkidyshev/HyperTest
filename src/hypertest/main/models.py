@@ -25,6 +25,7 @@ class Test(models.Model):
 
 
 class TestResult(models.Model):
+    result_id = models.IntegerField(_('Result ID'))
     test = models.ForeignKey(verbose_name=_('Test'), to=Test, on_delete=models.CASCADE, related_name='results')
     text = models.CharField(_('Text'), max_length=255)
     picture = models.ImageField(_('Picture'), blank=True, null=True, upload_to='tests-results')
@@ -34,8 +35,11 @@ class TestResult(models.Model):
         verbose_name = _('Test result')
         verbose_name_plural = _('Test results')
 
+        unique_together = [['result_id', 'test']]
+
 
 class TestQuestion(models.Model):
+    question_id = models.IntegerField(_('Question ID'))
     test = models.ForeignKey(verbose_name=_('Test'), to=Test, on_delete=models.CASCADE, related_name='questions')
     text = models.CharField(_('Text'), max_length=255)
     picture = models.ImageField(_('Picture'), blank=True, null=True, upload_to='tests-questions')
@@ -45,8 +49,11 @@ class TestQuestion(models.Model):
         verbose_name = _('Test question')
         verbose_name_plural = _('Test questions')
 
+        unique_together = [['question_id', 'test']]
+
 
 class TestQuestionAnswer(models.Model):
+    answer_id = models.IntegerField(_('Question Answer ID'))
     question = models.ForeignKey(verbose_name=_('Question'), to=TestQuestion, related_name='answers',
                                  on_delete=models.CASCADE)
     result = models.ForeignKey(verbose_name=_('Result'), to=TestResult, related_name='answers',
@@ -57,3 +64,5 @@ class TestQuestionAnswer(models.Model):
         db_table = 'test_question_answer'
         verbose_name = _('Test question answer')
         verbose_name_plural = _('Test question answers')
+
+        unique_together = [['answer_id', 'question']]
