@@ -105,6 +105,14 @@ AUTH_PASSWORD_VALIDATORS = [
 
 AUTH_USER_MODEL = 'user.User'
 
+# REST framework
+
+REST_FRAMEWORK = {
+    'NON_FIELD_ERRORS_KEY': 'message',
+    'EXCEPTION_HANDLER': 'api.exceptions.exception_handler',
+    'DEFAULT_PAGINATION_CLASS': 'api.pagination.Pagination',
+}
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.0/topics/i18n/
