@@ -1,8 +1,11 @@
 import base64
+import binascii
 
+from django.core.files.base import ContentFile
 from django.db.models import Q
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
+from rest_framework.fields import SkipField
 
 from hypertest.main.models import Test, Result, Question, Answer
 
@@ -35,10 +38,55 @@ def prettify_validation_error(err_detail):
 
 
 class PictureField(serializers.ImageField):
+    error_message = 'Некорретная строка base64, ожидаемый формат data:image/{формат};base64,{base64}. ' \
+                    'Чтобы удалить файл отправьте пустую строку'
+
+    def validate_empty_values(self, data):
+        if data == '':
+            return True, None
+        return super().validate_empty_values(data)
+
     def to_internal_value(self, data):
-        if isinstance(data, str):
-            data = base64.decodebytes(data.encode('UTF-8'))
-        return super().to_internal_value(data)
+        if not isinstance(data, str):
+            return super().to_internal_value(data)
+
+        if data.startswith('http') and self.root.instance:
+            raise SkipField
+
+        return super().to_internal_value(self.deserialize_base64(data))
+
+    def deserialize_base64(self, data):
+        good = False
+
+        if ';base64,' in data and '/' in data:
+            ext, base64_str = data.split(';base64,')
+            if '/' in ext:
+                ext = ext.split('/')[-1]
+                try:
+                    data = ContentFile(base64.b64decode(base64_str), name='temp.' + ext)
+                    good = True
+                except binascii.Error:
+                    pass
+
+        if not good:
+            raise ValidationError(self.error_message)
+
+        return data
+
+    def to_representation(self, value):
+        if not value:
+            return None
+
+        try:
+            url = value.url
+        except AttributeError:
+            return None
+
+        request = self.context.get('request', None)
+        if request is not None:
+            return request.scheme + '://' + request.get_host() + '/' + value.url
+
+        return url
 
 
 class AnswerSerializer(serializers.ModelSerializer):
@@ -189,14 +237,14 @@ class ResultListField(serializers.ListField):
             return result
 
         errors = [prettify_validation_error(errors.get(idx, {})) for idx in range(len(data))]
-        raise ValidationError([errors])
+        raise ValidationError(errors)
 
     def to_internal_value(self, data):
         data = super().to_internal_value(data)
 
         # hack
-        test_serializer: TestSerializer = self.root
-        test_serializer.results_ids = [result.validated_data['result_id'] for result in data]
+        # test_serializer: TestSerializer = self.root
+        # test_serializer.results_ids = [result.validated_data['result_id'] for result in data]
 
         return data
 
@@ -263,14 +311,13 @@ class QuestionListField(serializers.ListField):
                     continue
                 questions_ids[question_id] = idx
             except ValidationError as e:
-                print(e.detail)
                 errors[idx] = e.detail
 
         if not errors:
             return result
 
         errors = [prettify_validation_error(errors.get(idx, {})) for idx in range(len(data))]
-        raise ValidationError([errors])
+        raise ValidationError(errors)
 
     def to_representation(self, data):
         return [self.representation_serializer.to_representation(item) for item in data.all()]
@@ -289,6 +336,11 @@ class TestSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.results_ids = []
+
+    def to_internal_value(self, data):
+        if 'results' in data:
+            self.results_ids = [obj['result_id'] for obj in data['results'] if 'result_id' in obj]
+        return super().to_internal_value(data)
 
     @property
     def _writable_fields(self):
