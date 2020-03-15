@@ -103,7 +103,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-AUTH_USER_MODEL = 'hypertest.user.models.User'
+AUTH_USER_MODEL = 'user.User'
 
 
 # Internationalization
