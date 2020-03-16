@@ -179,11 +179,12 @@ class AnswerListField(serializers.ListField):
 class ResultSerializer(serializers.ModelSerializer):
     resId = serializers.IntegerField(source='result_id')
     resText = serializers.CharField(source='text', max_length=255)
+    resDesc = serializers.CharField(source='description', max_length=255, allow_blank=True, required=False)
     resPic = PictureField(source='picture', allow_null=True, default=None, required=False)
 
     class Meta:
         model = Result
-        fields = ['resId', 'resText', 'resPic']
+        fields = ['resId', 'resText', 'resDesc', 'resPic']
 
 
 class ResultListField(serializers.ListField):

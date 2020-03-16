@@ -28,6 +28,7 @@ class Result(models.Model):
     result_id = models.IntegerField(_('Result ID'))
     test = models.ForeignKey(verbose_name=_('Test'), to=Test, on_delete=models.CASCADE, related_name='results')
     text = models.CharField(_('Text'), max_length=255)
+    description = models.CharField(_('Description'), max_length=255, blank=True, null=True)
     picture = models.ImageField(_('Picture'), blank=True, null=True, upload_to='tests-results')
 
     class Meta:

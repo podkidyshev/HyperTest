@@ -23,11 +23,13 @@ class HyperTestTestCase(APITestCase):
             {
                 'resId': 0,
                 'resText': 'result 0',
+                'resDesc': 'result 0 description',
                 'resPic': None,
             },
             {
                 'resId': 1,
                 'resText': 'result 1',
+                'resDesc': 'result 1 description',
                 'resPic': None,
             }
         ],
