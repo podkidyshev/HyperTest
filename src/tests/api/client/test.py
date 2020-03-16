@@ -15,54 +15,54 @@ class HyperTestTestCase(APITestCase):
         'title': 'title',
         'description': 'description',
         'picture': None,
-        'published': False,
+        'isPublished': False,
         'vip': False,
         'price': 1,
         'gender': 0,
         'results': [
             {
-                'result_id': 0,
-                'text': 'result 0',
-                'picture': None,
+                'resId': 0,
+                'resText': 'result 0',
+                'resPic': None,
             },
             {
-                'result_id': 1,
-                'text': 'result 1',
-                'picture': None,
+                'resId': 1,
+                'resText': 'result 1',
+                'resPic': None,
             }
         ],
         'questions': [
             {
-                'question_id': 0,
-                'text': 'question 0',
-                'picture': None,
-                'answers': [
+                'qId': 0,
+                'qText': 'question 0',
+                'qPic': None,
+                'vars': [
                     {
-                        'answer_id': 0,
-                        'text': 'question 0 answer 0',
-                        'result_id': 0
+                        'varId': 0,
+                        'varText': 'question 0 answer 0',
+                        'res': 0
                     },
                     {
-                        'answer_id': 1,
-                        'text': 'question 0 answer 1',
-                        'result_id': None
+                        'varId': 1,
+                        'varText': 'question 0 answer 1',
+                        'res': None
                     }
                 ]
             },
             {
-                'question_id': 1,
-                'text': 'question 1',
-                'picture': None,
-                'answers': [
+                'qId': 1,
+                'qText': 'question 1',
+                'qPic': None,
+                'vars': [
                     {
-                        'answer_id': 0,
-                        'text': 'question 1 answer 0',
-                        'result_id': 0
+                        'varId': 0,
+                        'varText': 'question 1 answer 0',
+                        'res': 0
                     },
                     {
-                        'answer_id': 1,
-                        'text': 'question 1 answer 1',
-                        'result_id': 1
+                        'varId': 1,
+                        'varText': 'question 1 answer 1',
+                        'res': 1
                     }
                 ]
             }
@@ -126,7 +126,7 @@ class HyperTestTestCase(APITestCase):
         self.client.post(self.url, data, format='json')
 
         # test delete one answer
-        data['questions'][1]['answers'].pop()
+        data['questions'][1]['vars'].pop()
         response = self.client.put(url, data, format='json')
         self.assertEqual(response.status_code, 200)
 
@@ -134,7 +134,7 @@ class HyperTestTestCase(APITestCase):
         self.assertEqual(data, response.json())
 
         # test incorrect result_id in answer (and put method)
-        data['questions'][1]['answers'][0]['result_id'] = 100500
+        data['questions'][1]['vars'][0]['res'] = 100500
         response = self.client.put(url, data, format='json')
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
@@ -143,7 +143,7 @@ class HyperTestTestCase(APITestCase):
                 'fields': {
                     'questions': [
                         {},
-                        {'answers': [{'result_id': 'result_id = 100500 does not exist'}]}
+                        {'vars': [{'res': 'res = 100500 does not exist'}]}
                     ]
                 }
             }
@@ -152,7 +152,7 @@ class HyperTestTestCase(APITestCase):
         # test required fields
         data['results'].append({})
         data['questions'].append({})
-        data['questions'][0]['answers'].append({})
+        data['questions'][0]['vars'].append({})
         response = self.client.put(url, data, format='json')
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
@@ -160,12 +160,12 @@ class HyperTestTestCase(APITestCase):
             {
                 'fields': {
                     'results': [
-                        {}, {}, {'result_id': 'Это поле обязательно'}
+                        {}, {}, {'resId': 'Это поле обязательно'}
                     ],
                     'questions': [
-                        {'answers': [{}, {}, {'answer_id': 'Это поле обязательно'}]},
-                        {'answers': [{'result_id': 'result_id = 100500 does not exist'}]},
-                        {'question_id': 'Это поле обязательно'}
+                        {'vars': [{}, {}, {'varId': 'Это поле обязательно'}]},
+                        {'vars': [{'res': 'res = 100500 does not exist'}]},
+                        {'qId': 'Это поле обязательно'}
                     ]
                 }
             }

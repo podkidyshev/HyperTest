@@ -90,24 +90,27 @@ class PictureField(serializers.ImageField):
 
 
 class AnswerSerializer(serializers.ModelSerializer):
-    result_id = serializers.IntegerField(allow_null=True, write_only=True, required=True)
+    varId = serializers.IntegerField(source='answer_id', required=True, allow_null=False)
+    varText = serializers.CharField(source='text', required=True, allow_blank=False)
+
+    res = serializers.IntegerField(allow_null=True, write_only=True, required=True)
 
     class Meta:
         model = Answer
-        fields = ['answer_id', 'result_id', 'text']
+        fields = ['varId', 'res', 'varText']
 
-    def validate_result_id(self, result_id):
-        if result_id is None:
-            return result_id
+    def validate_res(self, res):
+        if res is None:
+            return res
 
-        if result_id not in self.root.results_ids:
-            raise ValidationError('result_id = {} does not exist'.format(result_id))
+        if res not in self.root.results_ids:
+            raise ValidationError('res = {} does not exist'.format(res))
 
-        return result_id
+        return res
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        data['result_id'] = instance.result.result_id if instance.result else None
+        data['res'] = instance.result.result_id if instance.result else None
         return data
 
 
@@ -120,7 +123,7 @@ class AnswerListField(serializers.ListField):
             answer_id = self.answer_id_field.to_internal_value(answer_id)
         except ValidationError:
             msg = ID_ERROR_MESSAGES['incorrect_type'].format(typ=answer_id.__class__.__name__, val=answer_id)
-            raise ValidationError({'answer_id': msg})
+            raise ValidationError({'varId': msg})
 
         if self.parent.instance is not None:
             try:
@@ -133,10 +136,10 @@ class AnswerListField(serializers.ListField):
         return answer
 
     def run_answer_validation(self, data):
-        if 'answer_id' not in data:
-            raise ValidationError({'answer_id': ID_ERROR_MESSAGES['required']})
+        if 'varId' not in data:
+            raise ValidationError({'varId': ID_ERROR_MESSAGES['required']})
 
-        answer = self.validate_answer_id(data['answer_id'])
+        answer = self.validate_answer_id(data['varId'])
 
         serializer = AnswerSerializer(instance=answer, data=data, context=self.root.context)
         serializer.parent = self.parent
@@ -157,7 +160,7 @@ class AnswerListField(serializers.ListField):
                 # validate no result_id duplicates
                 answer_id = validated_answer.validated_data['answer_id']
                 if answer_id in answers_ids:
-                    errors[idx] = errors[answers_ids[answer_id]] = ID_ERROR_MESSAGES['duplicates'].format(name='answer_id')
+                    errors[idx] = errors[answers_ids[answer_id]] = ID_ERROR_MESSAGES['duplicates'].format(name='varId')
                     continue
                 answers_ids[answer_id] = idx
             except ValidationError as e:
@@ -174,11 +177,13 @@ class AnswerListField(serializers.ListField):
 
 
 class ResultSerializer(serializers.ModelSerializer):
-    picture = PictureField(allow_null=True, default=None, required=False)
+    resId = serializers.IntegerField(source='result_id')
+    resText = serializers.CharField(source='text', max_length=255)
+    resPic = PictureField(source='picture', allow_null=True, default=None, required=False)
 
     class Meta:
         model = Result
-        fields = ['result_id', 'text', 'picture']
+        fields = ['resId', 'resText', 'resPic']
 
 
 class ResultListField(serializers.ListField):
@@ -190,7 +195,7 @@ class ResultListField(serializers.ListField):
             result_id = self.result_id_field.to_internal_value(result_id)
         except ValidationError:
             msg = ID_ERROR_MESSAGES['incorrect_type'].format(typ=result_id.__class__.__name__, val=result_id)
-            raise ValidationError({'result_id': msg})
+            raise ValidationError({'resId': msg})
 
         if self.root.instance is not None:
             try:
@@ -203,10 +208,10 @@ class ResultListField(serializers.ListField):
         return result
 
     def run_result_validation(self, data):
-        if 'result_id' not in data:
-            raise ValidationError({'result_id': ID_ERROR_MESSAGES['required']})
+        if 'resId' not in data:
+            raise ValidationError({'resId': ID_ERROR_MESSAGES['required']})
 
-        result = self.validate_result_id(data['result_id'])
+        result = self.validate_result_id(data['resId'])
 
         serializer = ResultSerializer(instance=result, data=data, context=self.root.context)
         serializer.parent = self
@@ -227,7 +232,7 @@ class ResultListField(serializers.ListField):
                 # validate no result_id duplicates
                 result_id = validated_result.validated_data['result_id']
                 if result_id in results_ids:
-                    errors[idx] = errors[results_ids[result_id]] = ID_ERROR_MESSAGES['duplicates'].format(name='result_id')
+                    errors[idx] = errors[results_ids[result_id]] = ID_ERROR_MESSAGES['duplicates'].format(name='resId')
                     continue
                 results_ids[result_id] = idx
             except ValidationError as e:
@@ -253,12 +258,15 @@ class ResultListField(serializers.ListField):
 
 
 class QuestionSerializer(serializers.ModelSerializer):
-    picture = PictureField(allow_null=True, default=None, required=False)
-    answers = AnswerListField()
+    qId = serializers.IntegerField(source='question_id', required=True, allow_null=False)
+    qText = serializers.CharField(source='text', max_length=255, allow_blank=True, required=False)
+    qPic = PictureField(source='picture', allow_null=True, default=None, required=False)
+
+    vars = AnswerListField(source='answers')
 
     class Meta:
         model = Question
-        fields = ['question_id', 'text', 'picture', 'answers']
+        fields = ['qId', 'qText', 'qPic', 'vars']
 
 
 class QuestionListField(serializers.ListField):
@@ -270,7 +278,7 @@ class QuestionListField(serializers.ListField):
             question_id = self.question_id_field.to_internal_value(question_id)
         except ValidationError:
             msg = ID_ERROR_MESSAGES['incorrect_type'].format(typ=question_id.__class__.__name__, val=question_id)
-            raise ValidationError({'question_id': msg})
+            raise ValidationError({'qId': msg})
 
         if self.root.instance is not None:
             try:
@@ -283,10 +291,10 @@ class QuestionListField(serializers.ListField):
         return question
 
     def run_question_validation(self, data):
-        if 'question_id' not in data:
-            raise ValidationError({'question_id': ID_ERROR_MESSAGES['required']})
+        if 'qId' not in data:
+            raise ValidationError({'qId': ID_ERROR_MESSAGES['required']})
 
-        question = self.validate_result_id(data['question_id'])
+        question = self.validate_result_id(data['qId'])
 
         serializer = QuestionSerializer(instance=question, data=data, context=self.root.context)
         serializer.parent = self
@@ -307,7 +315,7 @@ class QuestionListField(serializers.ListField):
                 # validate no result_id duplicates
                 question_id = validated_question.validated_data['question_id']
                 if question_id in questions_ids:
-                    errors[idx] = errors[questions_ids[question_id]] = ID_ERROR_MESSAGES['duplicates'].format(name='question_id')
+                    errors[idx] = errors[questions_ids[question_id]] = ID_ERROR_MESSAGES['duplicates'].format(name='qId')
                     continue
                 questions_ids[question_id] = idx
             except ValidationError as e:
@@ -324,13 +332,15 @@ class QuestionListField(serializers.ListField):
 
 
 class TestSerializer(serializers.ModelSerializer):
+    isPublished = serializers.BooleanField(source='published', default=False)
+
     picture = PictureField(allow_null=True, default=None, required=False)
     results = ResultListField()
     questions = QuestionListField()
 
     class Meta:
         model = Test
-        fields = ['id', 'title', 'description', 'picture', 'published', 'vip', 'price', 'gender', 'results',
+        fields = ['id', 'title', 'description', 'picture', 'isPublished', 'vip', 'price', 'gender', 'results',
                   'questions']
 
     def __init__(self, *args, **kwargs):
@@ -339,7 +349,7 @@ class TestSerializer(serializers.ModelSerializer):
 
     def to_internal_value(self, data):
         if 'results' in data:
-            self.results_ids = [obj['result_id'] for obj in data['results'] if 'result_id' in obj]
+            self.results_ids = [obj['resId'] for obj in data['results'] if 'resId' in obj]
         return super().to_internal_value(data)
 
     @property
@@ -380,8 +390,8 @@ class TestSerializer(serializers.ModelSerializer):
             Answer.objects.filter(~Q(id__in=answer_ids), question=question).delete()
             for answer in answers:
                 answer.validated_data['question'] = question
-                if 'result_id' in answer.validated_data:
-                    result_id = answer.validated_data.pop('result_id')
+                if 'res' in answer.validated_data:
+                    result_id = answer.validated_data.pop('res')
                     answer.validated_data['result'] = results_objects[result_id] if result_id is not None else None
                 answer.save()
 
