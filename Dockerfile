@@ -1,8 +1,9 @@
-FROM python:3.7-slim
+FROM python:3.7-alpine
 
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 DJANGO_SETTINGS_MODULE=settings.docker
 
-RUN apt-get update && apt-get install gcc python3-dev musl-dev -y
+RUN apk update \
+    && apk add --no-cache postgresql-dev gcc python3-dev musl-dev libc-dev linux-headers jpeg-dev zlib-dev
 
 RUN mkdir /code
 WORKDIR /code
@@ -17,4 +18,8 @@ COPY ./docker/uwsgi.ini /code/uwsgi.ini
 
 WORKDIR /code/src
 
-ENTRYPOINT ["bash", "../scripts/start.sh"]
+RUN addgroup -S app && adduser -S app -G app
+RUN chown -R app:app /code
+USER app
+
+ENTRYPOINT ["/bin/sh", "-c", "../scripts/start.sh"]

@@ -11,3 +11,5 @@ DATABASES = {
         'PORT': 5432,
     }
 }
+
+MEDIA_ROOT = '/var/media'
