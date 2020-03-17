@@ -1,0 +1,37 @@
+version: '3'
+
+services:
+  nginx:
+    build:
+      context: docker/nginx
+    ports:
+      - "443:443"
+    volumes:
+      - ./media:/var/media
+      - ./log/nginx:/var/log/nginx
+    restart: on-failure
+
+  db:
+    image: postgres:11-alpine
+    environment:
+      - POSTGRES_DB=hypertest
+      - POSTGRES_USER=hypertest
+      - POSTGRES_PASSWORD=hypertest
+      - PGPASSWORD=hypertest
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  back:
+    build: .
+    volumes:
+      - ./src:/code/src
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
+
+volumes:
+  postgres_data:

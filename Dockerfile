@@ -1,6 +1,8 @@
 FROM python:3.7-slim
 
-ENV PYTHONUNBUFFERED=1 DJANGO_SETTINGS_MODULE=settings.docker
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 DJANGO_SETTINGS_MODULE=settings.docker
+
+RUN apt-get update && apt-get install gcc python3-dev musl-dev -y
 
 RUN mkdir /code
 WORKDIR /code
@@ -11,6 +13,7 @@ RUN rm -rf /code/requirements/
 
 COPY ./src /code/src/
 COPY ./scripts /code/scripts
+COPY ./docker/uwsgi.ini /code/uwsgi.ini
 
 WORKDIR /code/src
 
