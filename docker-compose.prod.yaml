@@ -8,6 +8,7 @@ services:
       - "443:443"
       - "80:80"
     volumes:
+      - static:/var/static
       - ./media:/var/media
       - ./log/nginx:/var/log/nginx
       - ./ssl:/etc/ssl
@@ -31,6 +32,8 @@ services:
     build: .
     volumes:
       - ./src:/code/src
+      - static:/code/static
+      - ./media:/code/media
     expose:
       - "8000"
     ports:
@@ -41,3 +44,4 @@ services:
 
 volumes:
   postgres_data:
+  static:

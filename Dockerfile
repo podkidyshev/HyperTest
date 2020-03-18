@@ -18,8 +18,7 @@ COPY ./docker/uwsgi.ini /code/uwsgi.ini
 
 WORKDIR /code/src
 
-RUN addgroup -S app && adduser -S app -G app
-RUN chown -R app:app /code
-USER app
+RUN mkdir -p /code/media
+RUN mkdir -p /code/static
 
 ENTRYPOINT ["/bin/sh", "-c", "../scripts/start.sh"]

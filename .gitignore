@@ -6,3 +6,4 @@ src/settings/local.py
 media/
 log/
 ssl/
+static/

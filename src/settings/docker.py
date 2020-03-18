@@ -12,4 +12,5 @@ DATABASES = {
     }
 }
 
-MEDIA_ROOT = '/var/media'
+MEDIA_ROOT = '/code/media'
+STATIC_ROOT = '/code/static'
