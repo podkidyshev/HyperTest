@@ -173,6 +173,7 @@ class AnswerListField(serializers.ListField):
         raise ValidationError([errors])
 
     def to_representation(self, data):
+        self.representation_serializer.context['request'] = self.context.get('request', None)
         return [self.representation_serializer.to_representation(item) for item in data.all()]
 
 
@@ -255,6 +256,7 @@ class ResultListField(serializers.ListField):
         return data
 
     def to_representation(self, data):
+        self.representation_serializer.context['request'] = self.context.get('request', None)
         return [self.representation_serializer.to_representation(item) for item in data.all()]
 
 
@@ -329,6 +331,7 @@ class QuestionListField(serializers.ListField):
         raise ValidationError(errors)
 
     def to_representation(self, data):
+        self.representation_serializer.context['request'] = self.context.get('request', None)
         return [self.representation_serializer.to_representation(item) for item in data.all()]
 
 
