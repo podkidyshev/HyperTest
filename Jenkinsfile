@@ -1,13 +1,10 @@
 pipeline {
     agent any
 
-    environment {
-
-    }
-
     stages {
         stage('build') {
             steps {
+                sh 'ls'
                 sh 'ls'
             }
         }
