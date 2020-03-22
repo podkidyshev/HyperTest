@@ -137,6 +137,17 @@ STATIC_ROOT = os.path.join(PROJECT_DIR, 'static')
 MEDIA_URL = 'media/'
 MEDIA_ROOT = os.path.join(PROJECT_DIR, 'media')
 
+# VK
+
+VK = {
+    'api_id': '',
+    'api_secret': '',
+    'api_key': '',
+
+    'mock': True,
+    'mock_id': ''
+}
+
 
 try:
     from .local import *

@@ -1,3 +1,6 @@
+import hashlib
+
+from django.conf import settings
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.db import models
 from django.utils import timezone
@@ -41,3 +44,21 @@ class User(AbstractBaseUser):
     @classmethod
     def admins(cls):
         return cls.objects.filter(is_admin=True, is_active=True)
+
+
+class VKUser(models.Model):
+    id = models.BigIntegerField(_('VK ID'), primary_key=True)
+    coins = models.IntegerField(_('Coins count'), default=0)
+
+    class Meta:
+        db_table = 'vk_user'
+        verbose_name = 'VK user'
+        verbose_name_plural = 'VK users'
+
+    @classmethod
+    def auth_key_is_correct(cls, auth_key: str, viewer_id: str) -> bool:
+        if settings['VK']['mock']:
+            return True
+
+        check_str = settings.VK['api_id'] + '_' + viewer_id + '_' + settings.VK['api_secret']
+        return auth_key == hashlib.md5(check_str.encode()).decode()
