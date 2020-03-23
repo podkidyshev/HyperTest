@@ -1,19 +1,15 @@
 FROM node:12.8.1-alpine as build
 
-RUN mkdir /app
+RUN mkdir -p /app/build
 WORKDIR /app
 
 ENV PATH /app/node_modules/.bin:$PATH
 
 COPY ./front/package*.json /app/
-RUN npm install --silent
 
-RUN ls
+RUN npm install --silent --no-optional --only=prod --no-audit --no-cache
 
 COPY ./front/public /app/public/
 COPY ./front/src /app/src
 
-RUN npm run build
-
-RUN rm -rf /app/src
-RUN rm -rf /app/public
+ENTRYPOINT ["sh", "-c", "npm run build"]

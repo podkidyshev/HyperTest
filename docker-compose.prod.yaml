@@ -12,7 +12,7 @@ services:
       - ./media:/var/media
       - ./log/nginx:/var/log/nginx
       - ./ssl:/etc/ssl
-      - ./front-build:/var/front
+      - front_build:/etc/nginx/html/front
     restart: on-failure
     depends_on:
       - front
@@ -51,9 +51,10 @@ services:
       context: .
       dockerfile: ./docker/front/Dockerfile
     volumes:
-      - ./front-build:/app/build
+      - front_build:/app/build
 
 
 volumes:
   postgres_data:
   static:
+  front_build:
