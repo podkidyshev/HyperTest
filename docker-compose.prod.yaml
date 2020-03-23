@@ -12,14 +12,12 @@ services:
       - ./media:/var/media
       - ./log/nginx:/var/log/nginx
       - ./ssl:/etc/ssl
-      - front_build:/etc/nginx/html/front
+      - ./front/build:/etc/nginx/html
     restart: on-failure
     depends_on:
       - back
-      - front
     links:
       - back
-      - front
 
   db:
     image: postgres:12-alpine
@@ -46,15 +44,7 @@ services:
     depends_on:
       - db
 
-  front:
-    build:
-      context: .
-      dockerfile: ./docker/front/Dockerfile
-    volumes:
-      - front_build:/app/build
-
 
 volumes:
   postgres_data:
   static:
-  front_build:
