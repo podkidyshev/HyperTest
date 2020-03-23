@@ -19,6 +19,7 @@ services:
       - back
     links:
       - back
+      - front
 
   db:
     image: postgres:12-alpine
