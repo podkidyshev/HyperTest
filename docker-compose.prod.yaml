@@ -12,7 +12,11 @@ services:
       - ./media:/var/media
       - ./log/nginx:/var/log/nginx
       - ./ssl:/etc/ssl
+      - ./front-build:/var/front
     restart: on-failure
+    depends_on:
+      - front
+      - back
     links:
       - back
 
@@ -40,6 +44,13 @@ services:
       - "8000:8000"
     depends_on:
       - db
+
+  front:
+    build:
+      context: front
+      dockerfile: ./docker/front/Dockerfile
+    volumes:
+      - ./front-build:/app/build
 
 
 volumes:
