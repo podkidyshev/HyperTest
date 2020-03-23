@@ -8,6 +8,6 @@ ENV PATH /app/node_modules/.bin:$PATH
 COPY ./front/package_lock.json /app/package_lock.json
 RUN npm install --silent
 
-COPY ./front/ /app/
+COPY ./front/* /app/
 
 RUN npm run build

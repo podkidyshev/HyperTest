@@ -47,7 +47,7 @@ services:
 
   front:
     build:
-      context: front
+      context: .
       dockerfile: ./docker/front/Dockerfile
     volumes:
       - ./front-build:/app/build
