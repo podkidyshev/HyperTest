@@ -9,6 +9,12 @@ COPY ./front/package-lock.json /app/package-lock.json
 RUN npm install --silent
 RUN npm install react-scripts@3.0.1 -g --silent
 
-COPY ./front/ /app/
+RUN ls
+
+COPY ./front/public /app/public/
+COPY ./front/src /app/src
 
 RUN npm run build
+
+RUN rm -rf /app/src
+RUN rm -rf /app/public
