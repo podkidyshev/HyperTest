@@ -14,3 +14,4 @@ DATABASES = {
 
 MEDIA_ROOT = '/code/media'
 STATIC_ROOT = '/code/static'
+STATIC_URL = '/api_static/'

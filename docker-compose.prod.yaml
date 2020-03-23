@@ -15,8 +15,8 @@ services:
       - front_build:/etc/nginx/html/front
     restart: on-failure
     depends_on:
-      - front
       - back
+      - front
     links:
       - back
       - front
