@@ -9,16 +9,14 @@ RUN mkdir /code
 WORKDIR /code
 
 COPY ./requirements /code/requirements
-RUN pip install -r /code/requirements/base.txt
-RUN rm -rf /code/requirements/
+RUN pip install -r /code/requirements/base.txt && rm -rf /code/requirements/
 
 COPY ./src /code/src/
 COPY ./scripts /code/scripts
-COPY ./docker/uwsgi.ini /code/uwsgi.ini
+COPY docker/back/ /code/
 
 WORKDIR /code/src
 
-RUN mkdir -p /code/media
-RUN mkdir -p /code/static
+RUN mkdir -p /code/media && mkdir -p /code/static
 
 ENTRYPOINT ["/bin/sh", "-c", "../scripts/start.sh"]

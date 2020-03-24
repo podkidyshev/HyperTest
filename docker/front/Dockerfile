@@ -5,11 +5,9 @@ WORKDIR /app
 
 ENV PATH /app/node_modules/.bin:$PATH
 
-COPY ./front/package*.json /app/
+COPY ./package*.json /app/
 
 RUN npm install --silent --no-optional --only=prod --no-audit --no-cache
 
-COPY ./front/public /app/public/
-COPY ./front/src /app/src
-
-ENTRYPOINT ["sh", "-c", "npm run build"]
+COPY ../../front/public /app/public/
+COPY ../../front/src /app/src
