@@ -2,12 +2,8 @@ pipeline {
     agent any
 
     stages {
-        stage('stop previous') {
-            steps {
-                sh 'echo Stopping previous build'
-                sh 'docker-compose down --remove-orphans'
-                sh 'ls'
-            }
+        stage('test') {
+            sh 'ls'
         }
 
         stage('load ssl') {
