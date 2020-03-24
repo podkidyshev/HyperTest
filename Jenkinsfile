@@ -2,10 +2,6 @@ pipeline {
     agent any
 
     stages {
-        stage('test') {
-            sh 'ls'
-        }
-
         stage('load ssl') {
             steps {
                 withCredentials([
