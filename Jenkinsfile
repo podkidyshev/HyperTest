@@ -59,6 +59,7 @@ pipeline {
                 sh 'sleep 5'
                 sh 'docker-compose logs'
                 sh 'docker ps'
+                sh 'echo success!'
             }
         }
     }
