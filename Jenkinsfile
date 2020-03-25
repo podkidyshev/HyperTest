@@ -9,8 +9,8 @@ pipeline {
                         file(credentialsId: 'hypertests_key', variable: 'KEY')
                     ]) {
                     dir('ssl') {
-                        sh 'cat $CRT > hypertests.crt'
-                        sh 'cat $KEY > hypertests.key'
+                        sh 'cat ${CRT} > hypertests.crt'
+                        sh 'cat ${KEY} > hypertests.key'
                     }
                 }
             }
@@ -19,7 +19,7 @@ pipeline {
         stage('load local settings') {
             steps {
                 withCredentials([file(credentialsId: 'hypertests_local', variable: 'LOCAL')]) {
-                    sh 'cat $LOCAL > src/settings/local.py'
+                    sh 'cat ${LOCAL} > src/settings/local.py'
                 }
                 sh 'echo Wrote local.py file'
             }
