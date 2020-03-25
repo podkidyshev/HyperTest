@@ -42,6 +42,15 @@ pipeline {
             }
         }
 
+        stage('build front') {
+            steps {
+                sh 'cp docker/front/* front/'
+                dir('front') {
+                    sh 'build.sh'
+                }
+            }
+        }
+
         stage('run back') {
             steps {
                 sh 'echo Launching back'

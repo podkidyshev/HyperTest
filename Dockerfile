@@ -18,4 +18,4 @@ WORKDIR /code/src
 
 RUN mkdir -p /code/media && mkdir -p /code/static
 
-ENTRYPOINT ["/bin/sh", "-c", "../scripts/start.sh"]
+ENTRYPOINT ["/bin/sh", "-c", "../start.sh"]
