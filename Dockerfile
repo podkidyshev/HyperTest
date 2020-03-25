@@ -12,7 +12,6 @@ COPY ./requirements /code/requirements
 RUN pip install -r /code/requirements/base.txt && rm -rf /code/requirements/
 
 COPY ./src /code/src/
-COPY ./scripts /code/scripts
 COPY docker/back/ /code/
 
 WORKDIR /code/src
