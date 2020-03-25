@@ -24,4 +24,5 @@ docker cp hypertest_front_container:/app/build .
 
 # cleanup container
 echo "Cleaning up container"
+docker container stop hypertest_front_container  # ensure to stop the container
 docker container rm hypertest_front_container
