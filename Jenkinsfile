@@ -46,7 +46,9 @@ pipeline {
             steps {
                 sh 'echo Launching back'
                 sh 'docker-compose -f docker-compose.prod.yaml up -d --build'
-                sh 'sleep 10'
+                sh 'docker-compose logs'
+                sh 'sleep 5'
+                sh 'docker-compose logs'
                 sh 'docker ps'
             }
         }
