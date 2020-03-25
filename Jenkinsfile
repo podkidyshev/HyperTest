@@ -11,9 +11,13 @@ pipeline {
         }
 
         stage('checkout front') {
-            checkout([$class: 'GitSCM', branches: [[name: '*/master']], userRemoteConfigs: [[url: 'https://github.com/artemykairyak/hyperTest.git']],
-                       extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'front']]
-          ])
+            steps {
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '*/master']],
+                    userRemoteConfigs: [[url: 'https://github.com/artemykairyak/hyperTest.git']],
+                    extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'front']]])
+            }
         }
 
         stage('load ssl') {
