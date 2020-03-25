@@ -6,7 +6,6 @@ pipeline {
             steps {
                 sh 'docker-compose down --remove-orphans'
                 sh 'docker-compose rm'
-                sh 'rm -rf front requirements src docker* Jenkinsfile'
             }
         }
 
