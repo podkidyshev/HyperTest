@@ -26,7 +26,6 @@ pipeline {
                         file(credentialsId: 'hypertests_key', variable: 'KEY')
                     ]) {
                     dir('ssl') {
-                        sh 'cat ${CRT}'
                         sh 'cat ${CRT} > hypertests.crt'
                         sh 'cat ${KEY} > hypertests.key'
                     }
@@ -47,6 +46,8 @@ pipeline {
             steps {
                 sh 'echo Launching back'
                 sh 'docker-compose -f docker-compose.prod.yaml up -d --build'
+                sh 'sleep 10'
+                sh 'docker ps'
             }
         }
     }
