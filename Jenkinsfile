@@ -2,6 +2,14 @@ pipeline {
     agent any
 
     stages {
+        stage('cleanup') {
+            steps {
+                sh 'docker-compose down --remove-orphans'
+                sh 'docker-compose rm'
+                sh 'rm -rf front requirements src docker* Jenkinsfile'
+            }
+        }
+
         stage('load ssl') {
             steps {
                 withCredentials([
@@ -9,8 +17,8 @@ pipeline {
                         file(credentialsId: 'hypertests_key', variable: 'KEY')
                     ]) {
                     dir('ssl') {
-                        sh 'cp ${CRT} .'
-                        sh 'cp ${KEY} .'
+                        sh 'cat ${CRT} > hypertests.crt'
+                        sh 'cat ${KEY} > hypertests.key .'
                     }
                 }
             }
@@ -20,7 +28,6 @@ pipeline {
             steps {
                 withCredentials([file(credentialsId: 'hypertests_local', variable: 'LOCAL')]) {
                     sh 'cp ${LOCAL} src/settings/'
-                    sh 'mv local.py src/settings/'
                 }
                 sh 'echo Wrote local.py file'
             }
