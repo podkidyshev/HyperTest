@@ -4,6 +4,7 @@ rm -rf ./build
 mkdir build
 
 # remove container if somehow exist (due to fail build/run, etc)
+docker container stop hypertest_front_container
 docker container rm hypertest_front_container
 
 # now fail the whole script if anything fails
