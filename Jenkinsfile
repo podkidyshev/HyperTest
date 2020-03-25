@@ -46,7 +46,7 @@ pipeline {
             steps {
                 sh 'cp docker/front/* front/'
                 dir('front') {
-                    sh './build.sh'
+                    sh 'bash ./build.sh'
                 }
             }
         }
