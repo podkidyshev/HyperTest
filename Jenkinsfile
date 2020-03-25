@@ -38,7 +38,7 @@ pipeline {
         stage('load local settings') {
             steps {
                 withCredentials([file(credentialsId: 'hypertests_local', variable: 'LOCAL')]) {
-                    sh 'cp ${LOCAL} src/settings/'
+                    sh 'cat ${LOCAL} > src/settings/local.py'
                 }
                 sh 'echo Wrote local.py file'
             }
