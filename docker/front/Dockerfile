@@ -9,5 +9,5 @@ COPY ./package*.json /app/
 
 RUN npm install --silent --no-optional --only=prod --no-audit --no-cache
 
-COPY ../../front/public /app/public/
-COPY ../../front/src /app/src
+COPY public /app/public/
+COPY src /app/src
