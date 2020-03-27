@@ -1,6 +1,11 @@
 pipeline {
     agent any
 
+    def remote = [:]
+    remote.name = 'hypertests'
+    remote.host = 'hypertests.ru'
+    remote.allowAnyHosts = true
+
     stages {
         stage('cleanup') {
             steps {
@@ -51,16 +56,30 @@ pipeline {
             }
         }
 
-        stage('run back') {
-            steps {
-                sh 'echo Launching back'
-                sh 'docker-compose -f docker-compose.prod.yaml up -d --build'
-                sh 'docker-compose logs'
-                sh 'sleep 5'
-                sh 'docker-compose logs'
-                sh 'docker ps'
-                sh 'echo success!'
+        stage('deploy') {
+            withCredentials([sshUserPrivateKey(credentialsId: 'hypertests_ssh', keyFileVariable: 'SSH_KEY', passphraseVariable: 'SSH_PHRASE', usernameVariable: 'SSH_USER')]) {
+                remote.user = SSH_USER
+                remote.identityFile = SSH_KEY
+
+                // mkdir if not exist
+                sshCommand remote: remote, command: 'mkdir -p ~/Projects/hypertests'
+                // copy files
+                sshPut remote: remote, from: 'front/ src/ docker* requirements/ Dockerfile Jenkinsfile', into: '~/Projects/hypertests/'
+                sshCommand remote: remote, command: 'docker-compose -f docker-compose.prod.yaml up -d --build && \
+                    docker-compose logs && sleep 5 && docker-compose logs && docker ps && echo successfully deployed'
             }
         }
+
+//         stage('run back') {
+//             steps {
+//                 sh 'echo Launching back'
+//                 sh 'docker-compose -f docker-compose.prod.yaml up -d --build'
+//                 sh 'docker-compose logs'
+//                 sh 'sleep 5'
+//                 sh 'docker-compose logs'
+//                 sh 'docker ps'
+//                 sh 'echo success!'
+//             }
+//         }
     }
 }
