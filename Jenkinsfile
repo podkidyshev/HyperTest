@@ -2,13 +2,6 @@ pipeline {
     agent any
 
     stages {
-        stage('cleanup') {
-            steps {
-                sh 'docker-compose down --remove-orphans'
-                sh 'docker-compose rm'
-            }
-        }
-
         stage('checkout front') {
             steps {
                 checkout([
@@ -42,23 +35,25 @@ pipeline {
             }
         }
 
-//         stage('build front') {
-//             steps {
-//                 sh 'cp docker/front/* front/'
-//                 dir('front') {
-//                     sh 'bash ./build.sh'
-//                 }
-//             }
-//         }
+        stage('build front') {
+            steps {
+                sh 'cp docker/front/* front/'
+                dir('front') {
+                    sh 'bash ./build.sh'
+                }
+                sh 'mv front/build front-build && rm -rf front/* && mv front-build front/build'
+            }
+        }
+
+        stage('make artifacts') {
+            steps {
+                sh 'tar -czf artifacts.tar.gz ssl/ front/ src/ docker* requirements/ Dockerfile Jenkinsfile'
+            }
+        }
 
         stage('deploy') {
             steps {
-//                 sshagent(credentials: ['hypertests_ssh']) {
-//                     sh 'ssh '
-//                 }
                 withCredentials([sshUserPrivateKey(credentialsId: 'hypertests_ssh', keyFileVariable: 'SSH_KEY', passphraseVariable: 'SSH_PHRASE', usernameVariable: 'SSH_USER')]) {
-//                     sh 'head -n -1 ${SSH_KEY} > temp.txt ; mv temp.txt ${SSH_KEY}'
-//                     sh 'cat ${SSH_KEY}'
                     script {
                         def remote = [:]
                         remote.name = 'hypertests'
@@ -78,7 +73,6 @@ pipeline {
                                                              docker-compose rm || true'
 
                         // copy files
-                        sh 'tar -czf artifacts.tar.gz front/ src/ docker* requirements/ Dockerfile Jenkinsfile'
                         sshPut remote: remote, from: 'artifacts.tar.gz', into: '/home/ivan/Projects/hypertest/'
 
                         sshCommand remote: remote, command: 'cd ~/Projects/hypertest && \
@@ -94,22 +88,10 @@ pipeline {
                                                              sleep 5 && \
                                                              docker-compose logs && \
                                                              docker ps && \
-                                                             echo successfully deployed || echo fail'
+                                                             echo successfully deployed'
                     }
                 }
             }
         }
-
-//         stage('run back') {
-//             steps {
-//                 sh 'echo Launching back'
-//                 sh 'docker-compose -f docker-compose.prod.yaml up -d --build'
-//                 sh 'docker-compose logs'
-//                 sh 'sleep 5'
-//                 sh 'docker-compose logs'
-//                 sh 'docker ps'
-//                 sh 'echo success!'
-//             }
-//         }
     }
 }

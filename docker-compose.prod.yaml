@@ -29,7 +29,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ./postgres_data:/var/lib/postgresql/data
 
   back:
     build: .
@@ -46,5 +46,4 @@ services:
 
 
 volumes:
-  postgres_data:
   static:
