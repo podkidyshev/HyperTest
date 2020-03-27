@@ -1,11 +1,6 @@
 pipeline {
     agent any
 
-    def remote = [:]
-    remote.name = 'hypertests'
-    remote.host = 'hypertests.ru'
-    remote.allowAnyHosts = true
-
     stages {
         stage('cleanup') {
             steps {
@@ -47,26 +42,61 @@ pipeline {
             }
         }
 
-        stage('build front') {
-            steps {
-                sh 'cp docker/front/* front/'
-                dir('front') {
-                    sh 'bash ./build.sh'
-                }
-            }
-        }
+//         stage('build front') {
+//             steps {
+//                 sh 'cp docker/front/* front/'
+//                 dir('front') {
+//                     sh 'bash ./build.sh'
+//                 }
+//             }
+//         }
 
         stage('deploy') {
-            withCredentials([sshUserPrivateKey(credentialsId: 'hypertests_ssh', keyFileVariable: 'SSH_KEY', passphraseVariable: 'SSH_PHRASE', usernameVariable: 'SSH_USER')]) {
-                remote.user = SSH_USER
-                remote.identityFile = SSH_KEY
+            steps {
+//                 sshagent(credentials: ['hypertests_ssh']) {
+//                     sh 'ssh '
+//                 }
+                withCredentials([sshUserPrivateKey(credentialsId: 'hypertests_ssh', keyFileVariable: 'SSH_KEY', passphraseVariable: 'SSH_PHRASE', usernameVariable: 'SSH_USER')]) {
+//                     sh 'head -n -1 ${SSH_KEY} > temp.txt ; mv temp.txt ${SSH_KEY}'
+//                     sh 'cat ${SSH_KEY}'
+                    script {
+                        def remote = [:]
+                        remote.name = 'hypertests'
+                        remote.host = '45.80.70.27'
+                        remote.allowAnyHosts = true
 
-                // mkdir if not exist
-                sshCommand remote: remote, command: 'mkdir -p ~/Projects/hypertests'
-                // copy files
-                sshPut remote: remote, from: 'front/ src/ docker* requirements/ Dockerfile Jenkinsfile', into: '~/Projects/hypertests/'
-                sshCommand remote: remote, command: 'docker-compose -f docker-compose.prod.yaml up -d --build && \
-                    docker-compose logs && sleep 5 && docker-compose logs && docker ps && echo successfully deployed'
+                        remote.user = SSH_USER
+                        remote.identityFile = SSH_KEY
+
+                        // mkdir if not exist
+                        sshCommand remote: remote, command: 'mkdir -p ~/Projects/hypertest'
+
+                        // shutdown last build
+                        sshCommand remote: remote, command: 'cd ~/Projects/hypertest && \
+                                                             ls && \
+                                                             docker-compose -f docker-compose.prod.yaml down --remove-orphans && \
+                                                             docker-compose rm || true'
+
+                        // copy files
+                        sh 'tar -czf artifacts.tar.gz front/ src/ docker* requirements/ Dockerfile Jenkinsfile'
+                        sshPut remote: remote, from: 'artifacts.tar.gz', into: '/home/ivan/Projects/hypertest/'
+
+                        sshCommand remote: remote, command: 'cd ~/Projects/hypertest && \
+                                                             rm -rf front/ src/ docker* requirements/ Dockerfile Jenkinsfile && \
+                                                             gunzip -c artifacts.tar.gz | tar xopf - && \
+                                                             rm -rf artifacts.tar.gz && \
+                                                             ls'
+
+                        // run
+                        sshCommand remote: remote, command: 'cd ~/Projects/hypertest && \
+                                                             docker-compose -f docker-compose.prod.yaml up -d --build && \
+                                                             docker-compose logs && \
+                                                             sleep 5 && \
+                                                             docker-compose logs && \
+                                                             docker ps && \
+                                                             echo successfully deployed || echo fail'
+                    }
+                }
             }
         }
 
