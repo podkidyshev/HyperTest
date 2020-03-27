@@ -26,6 +26,7 @@ services:
       - POSTGRES_USER=hypertest
       - POSTGRES_PASSWORD=hypertest
       - PGPASSWORD=hypertest
+      - PGDATA=hypertest
     ports:
       - "5432:5432"
     volumes:
