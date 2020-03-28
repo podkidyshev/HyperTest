@@ -38,15 +38,15 @@ pipeline {
             }
         }
 
-        stage('build front') {
-            steps {
-                sh 'cp docker/front/* front/'
-                dir('front') {
-                    sh 'bash ./build.sh'
-                }
-                sh 'mv front/build front-build && rm -rf front/* && mv front-build front/build'
-            }
-        }
+//        stage('build front') {
+//            steps {
+//                sh 'cp docker/front/* front/'
+//                dir('front') {
+//                    sh 'bash ./build.sh'
+//                }
+//                sh 'mv front/build front-build && rm -rf front/* && mv front-build front/build'
+//            }
+//        }
 
         stage('make artifacts') {
             steps {
@@ -56,47 +56,66 @@ pipeline {
 
         stage('deploy') {
             steps {
-                withCredentials([sshUserPrivateKey(credentialsId: 'hypertests_ssh',
-                                                   keyFileVariable: 'SSH_KEY',
-                                                   passphraseVariable: 'SSH_PHRASE',
-                                                   usernameVariable: 'SSH_USER')]) {
-                    script {
-                        def remote = [:]
-                        remote.name = 'hypertests'
-                        remote.host = '45.80.70.27'
-                        remote.allowAnyHosts = true
-
-                        remote.user = SSH_USER
-                        remote.identityFile = SSH_KEY
-
-                        // mkdir if not exist
-                        sshCommand remote: remote, command: 'mkdir -p Projects/hypertest'
-
-                        // shutdown last build
-                        sshCommand remote: remote, command: 'cd Projects/hypertest && \
-                                                             ls && \
-                                                             docker-compose -f docker-compose.prod.yaml down --remove-orphans && \
-                                                             docker-compose rm || true'
-
-                        // copy files
-                        sshPut remote: remote, from: 'artifacts.tar.gz', into: '/home/ivan/Projects/hypertest/'
-
-                        sshCommand remote: remote, command: 'cd Projects/hypertest && \
-                                                             rm -rf front/ src/ docker* requirements/ Dockerfile Jenkinsfile && \
-                                                             gunzip -c artifacts.tar.gz | tar xopf - && \
-                                                             rm -rf artifacts.tar.gz && \
-                                                             ls'
-
-                        // run
-                        sshCommand remote: remote, command: 'cd Projects/hypertest && \
-                                                             docker-compose -f docker-compose.prod.yaml up -d --build && \
-                                                             docker-compose logs && \
-                                                             sleep 5 && \
-                                                             docker-compose logs && \
-                                                             docker ps && \
-                                                             echo successfully deployed'
+                script {
+                    withCredentials([sshUserPrivateKey(credentialsId: 'hypertests_ssh', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
+                        sh "ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} ${SSH_USER}@hypertests.ru '\
+                            mkdir -p ~/Projects/hypertest'"
+                        sh "scp -o StrictHostKeyChecking=no -i ${SSH_KEY} artifacts.tar.gz ${SSH_USER}@hypertests.ru:~/Projects/hypertest"
+                        sh "ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} ${SSH_USER}@hypertests.ru '\
+                            cd Projects/hypertest && \
+                            rm -rf front/ src/ docker* requirements/ Dockerfile Jenkinsfile && \
+                            gunzip -c artifacts.tar.gz | tar xopf - && \
+                            rm -rf artifacts.tar.gz && \
+                            ls && \
+                            docker-compose -f docker-compose.prod.yaml up -d --build && \
+                            docker-compose logs && \
+                            sleep 5 && \
+                            docker-compose logs && \
+                            docker ps && \
+                            echo successfully deployed'"
                     }
                 }
+//                withCredentials([sshUserPrivateKey(credentialsId: 'hypertests_ssh',
+//                                                   keyFileVariable: 'SSH_KEY',
+//                                                   passphraseVariable: 'SSH_PHRASE',
+//                                                   usernameVariable: 'SSH_USER')]) {
+//                    script {
+//                        def remote = [:]
+//                        remote.name = 'hypertests'
+//                        remote.host = '45.80.70.27'
+//                        remote.allowAnyHosts = true
+//
+//                        remote.user = SSH_USER
+//                        remote.identityFile = SSH_KEY
+//
+//                        // mkdir if not exist
+//                        sshCommand remote: remote, command: 'mkdir -p Projects/hypertest'
+//
+//                        // shutdown last build
+//                        sshCommand remote: remote, command: 'cd Projects/hypertest && \
+//                                                             ls && \
+//                                                             docker-compose -f docker-compose.prod.yaml down --remove-orphans && \
+//                                                             docker-compose rm || true'
+//
+//                        // copy files
+//                        sshPut remote: remote, from: 'artifacts.tar.gz', into: '/home/ivan/Projects/hypertest/'
+//
+//                        sshCommand remote: remote, command: 'cd Projects/hypertest && \
+//                                                             rm -rf front/ src/ docker* requirements/ Dockerfile Jenkinsfile && \
+//                                                             gunzip -c artifacts.tar.gz | tar xopf - && \
+//                                                             rm -rf artifacts.tar.gz && \
+//                                                             ls'
+//
+//                        // run
+//                        sshCommand remote: remote, command: 'cd Projects/hypertest && \
+//                                                             docker-compose -f docker-compose.prod.yaml up -d --build && \
+//                                                             docker-compose logs && \
+//                                                             sleep 5 && \
+//                                                             docker-compose logs && \
+//                                                             docker ps && \
+//                                                             echo successfully deployed'
+//                    }
+//                }
             }
         }
     }
