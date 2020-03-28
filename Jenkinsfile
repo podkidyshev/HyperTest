@@ -70,10 +70,10 @@ pipeline {
                         remote.identityFile = SSH_KEY
 
                         // mkdir if not exist
-                        sshCommand remote: remote, command: 'mkdir -p /home/ivan/Projects/hypertest'
+                        sshCommand remote: remote, command: 'mkdir -p Projects/hypertest'
 
                         // shutdown last build
-                        sshCommand remote: remote, command: 'cd /home/ivan/Projects/hypertest && \
+                        sshCommand remote: remote, command: 'cd Projects/hypertest && \
                                                              ls && \
                                                              docker-compose -f docker-compose.prod.yaml down --remove-orphans && \
                                                              docker-compose rm || true'
@@ -81,14 +81,14 @@ pipeline {
                         // copy files
                         sshPut remote: remote, from: 'artifacts.tar.gz', into: '/home/ivan/Projects/hypertest/'
 
-                        sshCommand remote: remote, command: 'cd /home/ivan/Projects/hypertest && \
+                        sshCommand remote: remote, command: 'cd Projects/hypertest && \
                                                              rm -rf front/ src/ docker* requirements/ Dockerfile Jenkinsfile && \
                                                              gunzip -c artifacts.tar.gz | tar xopf - && \
                                                              rm -rf artifacts.tar.gz && \
                                                              ls'
 
                         // run
-                        sshCommand remote: remote, command: 'cd /home/ivan/Projects/hypertest && \
+                        sshCommand remote: remote, command: 'cd Projects/hypertest && \
                                                              docker-compose -f docker-compose.prod.yaml up -d --build && \
                                                              docker-compose logs && \
                                                              sleep 5 && \
