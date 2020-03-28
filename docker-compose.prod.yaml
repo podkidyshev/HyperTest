@@ -26,11 +26,10 @@ services:
       - POSTGRES_USER=hypertest
       - POSTGRES_PASSWORD=hypertest
       - PGPASSWORD=hypertest
-      - PGDATA=/hypertest
     ports:
       - "5432:5432"
     volumes:
-      - ./postgres_data:/hypertest
+      - ./var/pg_data:/var/lib/postgresql/data
 
   back:
     build: .
