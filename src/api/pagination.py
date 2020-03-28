@@ -11,8 +11,10 @@ class Pagination(PageNumberPagination):
         return Response({
             '_metadata': {
                 'page': self.page.number,
-                'per_page': self.page.paginator.per_page,
-                'total_pages': self.page.paginator.count,
+                'page_size': self.page.paginator.per_page,
+                'total_pages': self.page.paginator.num_pages,
+                'total_items': self.page.paginator.count,
+                'max_page_size': self.max_page_size,
             },
             'items': data
         })
