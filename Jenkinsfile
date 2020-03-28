@@ -37,7 +37,7 @@ pipeline {
                 sh 'echo Wrote local.py file'
             }
         }
-
+/*
         stage('build front') {
             steps {
                 sh 'cp docker/front/* front/'
@@ -47,7 +47,7 @@ pipeline {
                 sh 'mv front/build front-build && rm -rf front/* && mv front-build front/build'
             }
         }
-
+*/
         stage('make artifacts') {
             steps {
                 sh 'tar -czf artifacts.tar.gz ssl/ front/ src/ docker* requirements/ Dockerfile Jenkinsfile'
@@ -56,25 +56,29 @@ pipeline {
 
         stage('deploy') {
             steps {
-//                script {
-//                    withCredentials([sshUserPrivateKey(credentialsId: 'hypertests_ssh', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
-//                        sh "ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} ${SSH_USER}@hypertests.ru '\
-//                            mkdir -p ~/Projects/hypertest'"
-//                        sh "scp -o StrictHostKeyChecking=no -i ${SSH_KEY} artifacts.tar.gz ${SSH_USER}@hypertests.ru:~/Projects/hypertest"
-//                        sh "ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} ${SSH_USER}@hypertests.ru '\
-//                            cd Projects/hypertest && \
-//                            rm -rf front/ src/ docker* requirements/ Dockerfile Jenkinsfile && \
-//                            gunzip -c artifacts.tar.gz | tar xopf - && \
-//                            rm -rf artifacts.tar.gz && \
-//                            ls && \
-//                            docker-compose -f docker-compose.prod.yaml up -d --build && \
-//                            docker-compose logs && \
-//                            sleep 5 && \
-//                            docker-compose logs && \
-//                            docker ps && \
-//                            echo successfully deployed'"
-//                    }
-//                }
+                script {
+                    withCredentials([sshUserPrivateKey(credentialsId: 'hypertests_ssh', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
+                        sh "ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} ${SSH_USER}@hypertests.ru '\
+                            mkdir -p ~/Projects/hypertest'"
+                        sh "scp -o StrictHostKeyChecking=no -i ${SSH_KEY} artifacts.tar.gz ${SSH_USER}@hypertests.ru:~/Projects/hypertest"
+                        sh "ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} ${SSH_USER}@hypertests.ru '\
+                            cd Projects/hypertest && \
+                            ls && \
+                            docker-compose -f docker-compose.prod.yaml down --remove-orphans && \
+                            docker-compose rm && \
+                            rm -rf front/ src/ docker* requirements/ Dockerfile Jenkinsfile && \
+                            gunzip -c artifacts.tar.gz | tar xopf - && \
+                            rm -rf artifacts.tar.gz && \
+                            ls && \
+                            docker-compose -f docker-compose.prod.yaml up -d --build && \
+                            docker-compose logs && \
+                            sleep 5 && \
+                            docker-compose logs && \
+                            docker ps && \
+                            echo successfully deployed'"
+                    }
+                }
+/*
                 withCredentials([sshUserPrivateKey(credentialsId: 'hypertests_ssh',
                                                    keyFileVariable: 'SSH_KEY',
                                                    passphraseVariable: 'SSH_PHRASE',
@@ -116,6 +120,7 @@ pipeline {
                                                              echo successfully deployed'
                     }
                 }
+                */
             }
         }
     }
