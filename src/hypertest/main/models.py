@@ -1,6 +1,8 @@
 from django.db import models
 from django.utils.translation import ugettext as _
 
+from hypertest.user.models import VKUser
+
 
 class GenderChoices(models.IntegerChoices):
     ANY = 0, 'Any'
@@ -17,6 +19,9 @@ class Test(models.Model):
     vip = models.BooleanField(_('VIP'), default=False)
     price = models.IntegerField(_('Price'), default=0)
     gender = models.IntegerField(_('For gender'), choices=GenderChoices.choices, default=GenderChoices.ANY)
+
+    user = models.ForeignKey(VKUser, on_delete=models.SET_NULL, related_name='tests', verbose_name=_('Creator'),
+                             blank=True, null=True)
 
     class Meta:
         db_table = 'test'
