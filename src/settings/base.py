@@ -142,13 +142,7 @@ MEDIA_ROOT = os.path.join(PROJECT_DIR, 'media')
 VK = {
     'api_id': '',
     'api_secret': '',
-    'api_key': '',
-
-    'mock': False,
-    'mock_id': '',
-
-    'mock_dev': False,
-    'mock_dev_values': (None, None)  # viewer_id, auth_key
+    'api_key': ''
 }
 
 
