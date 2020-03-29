@@ -34,6 +34,9 @@ def exception_handler(exc, context):
         else:
             data = {'message': exc.detail}
         set_rollback()
+
+        data = {'errors': data}
+
         return Response(data, status=exc.status_code, headers=headers)
 
     return None

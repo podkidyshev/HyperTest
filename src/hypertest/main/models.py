@@ -23,6 +23,9 @@ class Test(models.Model):
         verbose_name = _('Test')
         verbose_name_plural = _('Tests')
 
+    def __str__(self):
+        return self.title
+
 
 class Result(models.Model):
     result_id = models.IntegerField(_('Result ID'))
@@ -38,6 +41,9 @@ class Result(models.Model):
 
         unique_together = [['result_id', 'test']]
 
+    def __str__(self):
+        return f'{self.result_id}: {self.text} ({self.test.title})'
+
 
 class Question(models.Model):
     question_id = models.IntegerField(_('Question ID'))
@@ -51,6 +57,9 @@ class Question(models.Model):
         verbose_name_plural = _('Test questions')
 
         unique_together = [['question_id', 'test']]
+
+    def __str__(self):
+        return f'{self.question_id}: {self.text} ({self.test.title})'
 
 
 class Answer(models.Model):
@@ -67,3 +76,6 @@ class Answer(models.Model):
         verbose_name_plural = _('Test question answers')
 
         unique_together = [['answer_id', 'question']]
+
+    def __str__(self):
+        return f'{self.answer_id}: {self.text} ({self.question.text})'

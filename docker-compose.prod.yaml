@@ -12,7 +12,10 @@ services:
       - ./media:/var/media
       - ./log/nginx:/var/log/nginx
       - ./ssl:/etc/ssl
+      - ./front/build:/etc/nginx/html
     restart: on-failure
+    depends_on:
+      - back
     links:
       - back
 
@@ -26,7 +29,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ./var/pg_data:/var/lib/postgresql/data
 
   back:
     build: .
@@ -43,5 +46,4 @@ services:
 
 
 volumes:
-  postgres_data:
   static:
