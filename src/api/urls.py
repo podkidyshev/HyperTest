@@ -1,9 +1,9 @@
 from django.urls import path
 
-import api.client as client
+import api.main as main
 
 
 urlpatterns = [
-    path('tests', client.test_list_view, name='tests-list'),
-    path('tests/<int:pk>', client.test_detail_view, name='tests-detail'),
+    path('tests', main.test_list_view, name='tests-list'),
+    path('tests/<int:pk>', main.test_detail_view, name='tests-detail'),
 ]
