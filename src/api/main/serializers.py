@@ -8,6 +8,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.fields import SkipField
 
 from hypertest.main.models import Test, Result, Question, Answer
+from api.user.serializers import VKUserSerializer
 
 
 ID_ERROR_MESSAGES = {
@@ -345,7 +346,8 @@ class TestSerializer(serializers.ModelSerializer):
     class Meta:
         model = Test
         fields = ['id', 'title', 'description', 'picture', 'isPublished', 'vip', 'price', 'gender', 'results',
-                  'questions']
+                  'questions', 'user']
+        read_only_fields = ['id', 'user']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -355,6 +357,12 @@ class TestSerializer(serializers.ModelSerializer):
         if 'results' in data:
             self.results_ids = [obj['resId'] for obj in data['results'] if 'resId' in obj]
         return super().to_internal_value(data)
+
+    def validate(self, attrs):
+        user = self.context['request'].user
+        attrs['user'] = user
+
+        return attrs
 
     @property
     def _writable_fields(self):
