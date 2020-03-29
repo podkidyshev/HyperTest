@@ -6,13 +6,7 @@ from hypertest.main.models import Test
 from .serializers import TestSerializer
 from api.pagination import Pagination
 from api.auth import VKUserAuthentication
-
-
-class AuthRequiredForCreation(IsAuthenticated):
-    def has_permission(self, request, view):
-        if request.method.lower() == 'post':
-            return bool(request.user and request.user.is_authenticated)
-        return True
+from api.permissions import AuthRequiredForCreation
 
 
 class TestView(ModelViewSet):
