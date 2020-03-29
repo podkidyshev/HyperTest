@@ -57,8 +57,12 @@ class VKUser(models.Model):
 
     @classmethod
     def auth_key_is_correct(cls, auth_key: str, viewer_id: str) -> bool:
-        if settings['VK']['mock']:
+        if settings.VK['mock']:
             return True
 
         check_str = settings.VK['api_id'] + '_' + viewer_id + '_' + settings.VK['api_secret']
-        return auth_key == hashlib.md5(check_str.encode()).decode()
+        return auth_key == hashlib.md5(check_str.encode()).hexdigest()
+
+    @property
+    def is_authenticated(self):
+        return True

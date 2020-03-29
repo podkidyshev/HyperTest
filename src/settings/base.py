@@ -144,7 +144,7 @@ VK = {
     'api_secret': '',
     'api_key': '',
 
-    'mock': True,
+    'mock': False,
     'mock_id': ''
 }
 
