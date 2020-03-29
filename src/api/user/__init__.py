@@ -1,1 +1,1 @@
-from .views import VKUserView
+from .views import VKUserView, VKUserAuthView

@@ -1,32 +1,33 @@
-from django.conf import settings
-from rest_framework.authentication import BaseAuthentication
+from rest_framework.authentication import BaseAuthentication, get_authorization_header
 from rest_framework.exceptions import AuthenticationFailed
 
-from hypertest.user.models import VKUser
+from hypertest.user.models import VKUserToken
 
 
 class VKUserAuthentication(BaseAuthentication):
-    def authenticate(self, request):
-        if settings.VK['mock']:
-            return VKUser.objects.get_or_create(id=settings.VK['mock_id'])
+    keyword = 'Bearer'
 
-        if 'auth_key' not in request.COOKIES and 'viewer_id' not in request.COOKIES:
+    def authenticate(self, request):
+        auth = get_authorization_header(request).split()
+
+        if not auth or auth[0].lower() != self.keyword.lower().encode():
             return None
 
-        if 'auth_key' not in request.COOKIES:
-            raise AuthenticationFailed('Param `auth_key` is required')
-        if 'viewer_id' not in request.COOKIES:
-            raise AuthenticationFailed('Param `viewer_id` is required')
+        try:
+            token = auth[1].decode()
+        except (UnicodeError, IndexError):
+            msg = 'Invalid token header. Token string should not contain invalid characters.'
+            raise AuthenticationFailed(msg)
 
-        auth_key = request.COOKIES['auth_key']
-        viewer_id = request.COOKIES['viewer_id']
+        return self.authenticate_credentials(token)
 
-        if settings.VK['mock_dev'] and (viewer_id, auth_key) != settings.VK['mock_dev_values']:
-            raise AuthenticationFailed('Invalid auth_key')
+    def authenticate_credentials(self, token):
+        try:
+            vk_user_token = VKUserToken.objects.get(token=token)
+        except VKUserToken.DoesNotExist:
+            raise AuthenticationFailed('Invalid token')
 
-        if not settings.VK['mock_dev'] and not VKUser.auth_key_is_correct(auth_key, viewer_id):
-            raise AuthenticationFailed('Invalid auth_key')
+        return vk_user_token.user, token
 
-        vk_user, _ = VKUser.objects.get_or_create(id=viewer_id)
-
-        return vk_user, None
+    def authenticate_header(self, request):
+        return self.keyword
