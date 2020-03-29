@@ -145,7 +145,10 @@ VK = {
     'api_key': '',
 
     'mock': False,
-    'mock_id': ''
+    'mock_id': '',
+
+    'mock_dev': False,
+    'mock_dev_values': (None, None)  # viewer_id, auth_key
 }
 
 

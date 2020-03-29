@@ -21,7 +21,10 @@ class VKUserAuthentication(BaseAuthentication):
         auth_key = request.COOKIES['auth_key']
         viewer_id = request.COOKIES['viewer_id']
 
-        if not VKUser.auth_key_is_correct(auth_key, viewer_id):
+        if settings.VK['mock_dev'] and (viewer_id, auth_key) != settings.VK['mock_dev_values']:
+            raise AuthenticationFailed('Invalid auth_key')
+
+        if not settings.VK['mock_dev'] and not VKUser.auth_key_is_correct(auth_key, viewer_id):
             raise AuthenticationFailed('Invalid auth_key')
 
         vk_user, _ = VKUser.objects.get_or_create(id=viewer_id)
