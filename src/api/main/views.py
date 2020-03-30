@@ -24,6 +24,7 @@ class TestView(ModelViewSet):
         return TestSerializer
 
     # TODO: hardcode
+    # TODO: test github webhooks - delete this
     def get_queryset(self):
         if self.action == 'list':
             return Test.objects.filter(published=True).order_by('-id')
