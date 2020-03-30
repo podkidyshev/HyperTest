@@ -8,7 +8,6 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.fields import SkipField
 
 from hypertest.main.models import Test, Result, Question, Answer
-from api.user.serializers import VKUserSerializer
 
 
 ID_ERROR_MESSAGES = {
@@ -408,3 +407,11 @@ class TestSerializer(serializers.ModelSerializer):
                 answer.save()
 
         return test
+
+
+class TestShortSerializer(serializers.ModelSerializer):
+    isPublished = serializers.BooleanField(source='published', default=False)
+
+    class Meta:
+        model = Test
+        fields = ['id', 'title', 'description', 'picture', 'isPublished', 'vip', 'price', 'gender', 'user']
