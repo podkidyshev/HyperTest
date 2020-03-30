@@ -9,7 +9,7 @@ RUN mkdir /code
 WORKDIR /code
 
 COPY ./requirements /code/requirements
-RUN pip install -r /code/requirements/base.txt && rm -rf /code/requirements/
+RUN pip install -r /code/requirements/base.txt -r /code/requirements/prod.txt && rm -rf /code/requirements/
 
 COPY ./src /code/src/
 COPY docker/back/ /code/
