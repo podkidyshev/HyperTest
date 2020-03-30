@@ -415,6 +415,7 @@ class TestSerializer(serializers.ModelSerializer):
 
 class TestShortSerializer(serializers.ModelSerializer):
     isPublished = serializers.BooleanField(source='published', default=False)
+    picture = PictureField(allow_null=True, default=None, required=False)
 
     class Meta:
         model = Test
