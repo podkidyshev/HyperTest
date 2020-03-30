@@ -361,6 +361,10 @@ class TestSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
         attrs['user'] = user
 
+        # on creation test could be only published=False
+        if not self.instance:
+            attrs['published'] = False
+
         return attrs
 
     @property
