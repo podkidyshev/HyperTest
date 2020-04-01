@@ -64,7 +64,7 @@ class MyTestsView(ListAPIView):
     serializer_class = TestShortSerializer
 
     def get_queryset(self):
-        return Test.objects.filter(user=self.request.user)
+        return Test.objects.filter(user=self.request.user).annotate(passed=Count('passes'))
 
 
 test_list_view = TestView.as_view(
