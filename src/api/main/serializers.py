@@ -342,11 +342,13 @@ class TestSerializer(serializers.ModelSerializer):
     results = ResultListField()
     questions = QuestionListField()
 
+    passed = serializers.IntegerField()  # must be annotated to queryset
+
     class Meta:
         model = Test
         fields = ['id', 'title', 'description', 'picture', 'isPublished', 'vip', 'price', 'gender', 'results',
-                  'questions', 'user']
-        read_only_fields = ['id', 'user']
+                  'questions', 'user', 'passed']
+        read_only_fields = ['id', 'user', 'passed']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -417,6 +419,10 @@ class TestShortSerializer(serializers.ModelSerializer):
     isPublished = serializers.BooleanField(source='published', default=False)
     picture = PictureField(allow_null=True, default=None, required=False)
 
+    passed = serializers.IntegerField()  # must be annotated to queryset
+
     class Meta:
         model = Test
-        fields = ['id', 'title', 'description', 'picture', 'isPublished', 'vip', 'price', 'gender', 'user']
+        fields = ['id', 'title', 'description', 'picture', 'isPublished', 'vip', 'price', 'gender', 'user',
+                  'passed']
+        read_only_fields = ['id', 'user', 'passed']

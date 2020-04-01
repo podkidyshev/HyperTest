@@ -172,6 +172,23 @@ paths:
         '204':
           description: Тест успешно удален
 
+  /api/tests/{id}/pass:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Идетификатор теста
+        schema:
+          type: integer
+          example: 1
+    post:
+      tags:
+        - Тесты
+      summary: Тест пройден
+      responses:
+        '204':
+          description: Прохождение успешно засчитано
+
 
 components:
   schemas:
@@ -209,6 +226,10 @@ components:
           type: integer
           description: Идентификатор результата (Result)
           example: 1
+      required:
+        - varId
+        - varText
+        - res
 
     Question:
       type: object
@@ -229,6 +250,10 @@ components:
           description: Список ответов
           items:
             $ref: '#/components/schemas/Answer'
+      required:
+        - qId
+        - qText
+        - vars
 
     Result:
       type: object
@@ -248,6 +273,9 @@ components:
           example: "Такое встречается лишь у людей"
         resPic:
           $ref: '#/components/schemas/Picture'
+      required:
+        - resId
+        - resText
 
     Test:
       type: object
@@ -257,6 +285,7 @@ components:
           type: integer
           description: Идентификатор теста
           example: 1
+          readOnly: true
         title:
           type: string
           description: Заголовок теста
@@ -265,30 +294,35 @@ components:
           type: string
           description: Описание теста
           example: "Этот тест позволит определить какой вы покемон"
+          default: ""
         picture:
           $ref: '#/components/schemas/Picture'
         isPublished:
           type: boolean
-          description: Тест опубликован
+          description: Тест опубликован. После создания всегда false
           example: false
+          default: "false"
         vip:
           type: boolean
           description: Текст доступен только vip-клиентам
           example: true
+          default: false
         price:
           type: integer
           description: Стоимость в монетках прохождения теста
           example: 100
+          default: 0
         gender:
           type: integer
           description: Для какого пола теста. 0 - для всех, 1 - для мужчин, 2 - для женщин
           example: 2
+          default: 0
         results:
           type: array
           description: Список результатов
           items:
             $ref: '#/components/schemas/Result'
-        question:
+        questions:
           type: array
           description: Список вопросов
           items:
@@ -297,6 +331,16 @@ components:
           type: integer
           description: Идентификатор пользователя ВКонтакте - создателя теста
           example: 5293812
+          readOnly: true
+        passed:
+          type: integer
+          description: Количество людей, прошедших тест
+          example: 2
+          readOnly: true
+      required:
+        - title
+        - questions
+        - results
 
     TestShort:
       type: object
@@ -306,6 +350,7 @@ components:
           type: integer
           description: Идентификатор теста
           example: 1
+          readOnly: true
         title:
           type: string
           description: Заголовок теста
@@ -336,6 +381,12 @@ components:
           type: integer
           description: Идентификатор пользователя ВКонтакте - создателя теста
           example: 5293812
+          readOnly: true
+        passed:
+          type: integer
+          description: Количество людей, прошедших тест
+          example: 2
+          readOnly: true
 
     Errors:
       description: >-

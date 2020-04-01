@@ -84,3 +84,16 @@ class Answer(models.Model):
 
     def __str__(self):
         return f'{self.answer_id}: {self.text} ({self.question.text})'
+
+
+class TestPass(models.Model):
+    test = models.ForeignKey(verbose_name=_('Test'), to=Test, related_name='passes', on_delete=models.CASCADE)
+    user = models.ForeignKey(verbose_name=_('VK User'), to=VKUser, related_name='tests_passed', on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = 'test_pass'
+        verbose_name = _('Test pass')
+        verbose_name_plural = _('Tests\' passes')
+
+    def __str__(self):
+        return f'User: {self.user.id}, test: {self.test.title} ({self.test.id})'
