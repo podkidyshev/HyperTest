@@ -1,0 +1,416 @@
+openapi: 3.0.0
+info:
+  title: Hypertests API documentation
+  version: 1.0.0
+  license:
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+  contact:
+    email: raashicat@gmail.com
+  termsOfService: 'http://swagger.io/terms/'
+  description: Hypertests API documentation
+
+servers:
+  - url: https://hypertests.ru
+
+tags:
+  - name: Пользователи
+  - name: Тесты
+
+paths:
+  /api/auth:
+    post:
+      tags:
+        - Пользователи
+      summary: Получение токена
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                query:
+                  type: string
+                  description: Строка url, сгенерирования ВКонтакте, без символа ?
+                  example: "vk_user_id=111111&....&...&sign=sdkjfksdjfksdj"
+      responses:
+        '200':
+          description: Успешная аутентификация
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                    description: Bearer токен
+                    example: "213fmdsj934ds394"
+  /api/profile:
+    get:
+      tags:
+        - Пользователи
+      summary: Получение данных текущего пользователя
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Успешная обработка запроса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VKUser'
+
+  /api/tests:
+    get:
+      tags:
+        - Тесты
+      summary: Получение списка тестов
+      responses:
+        '200':
+          description: Успешная обработка запроса
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  _metadata:
+                    $ref: '#/components/schemas/PaginationMetadata'
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TestShort'
+
+    post:
+      tags:
+        - Тесты
+      summary: Создание теста
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Test'
+      responses:
+        '200':
+          description: Тест создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Test'
+
+  /api/tests/my:
+    get:
+      tags:
+        - Тесты
+      summary: Получение тестов текущего пользователя
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Успешная обработка запроса
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  _metadata:
+                    $ref: '#/components/schemas/PaginationMetadata'
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TestShort'
+
+  /api/tests/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Идетификатор теста
+        schema:
+          type: integer
+          example: 1
+    get:
+      tags:
+        - Тесты
+      summary: Получение детализированного объекта теста
+      responses:
+        '200':
+          description: Успешная обработка запроса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Test'
+    put:
+      tags:
+        - Тесты
+      summary: Редактирование теста
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Test'
+      responses:
+        '200':
+          description: Успешная обработка запроса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Test'
+
+    delete:
+      tags:
+        - Тесты
+      summary: Удаление теста
+      responses:
+        '204':
+          description: Тест успешно удален
+
+
+components:
+  schemas:
+    Picture:
+      type: string
+      description: "Картинка. На выход: ссылка на картинку. На вход: base64 для загрузки или пустая строка/null для стирания. Если прислать ссылку на текущую картинку, то значение проигнорируется"
+      example: "taks"
+
+    VKUser:
+      type: object
+      description: Пользователь ВКонтакте
+      properties:
+        id:
+          type: integer
+          description: Идентификатор пользователя вконтакте
+          example: 8982193
+        coins:
+          type: integer
+          description: Количество монеток
+          example: 100500
+
+    Answer:
+      type: object
+      description: Вариант ответа на вопрос
+      properties:
+        varId:
+          type: integer
+          description: Идентификатор ответа в рамках одного вопроса (Question) - д. б. уникальным в одном вопросе
+          example: 1
+        varText:
+          type: string
+          description: Текст ответа
+          example: "Да"
+        res:
+          type: integer
+          description: Идентификатор результата (Result)
+          example: 1
+
+    Question:
+      type: object
+      description: Вопрос
+      properties:
+        qId:
+          type: integer
+          description: Идентификатор вопроса - д. б. уникальным в одном тесте
+          example: 1
+        qText:
+          type: string
+          description: Текст вопроса
+          example: "Какого цвета интернет?"
+        qPic:
+          $ref: '#/components/schemas/Picture'
+        vars:
+          type: array
+          description: Список ответов
+          items:
+            $ref: '#/components/schemas/Answer'
+
+    Result:
+      type: object
+      description: Результат
+      properties:
+        resId:
+          type: integer
+          description: Идентификатор результата - д. б. уникальным в рамках текущего объекта теста
+          example: 1
+        resText:
+          type: string
+          description: Текст результата
+          example: "Вы кот на 37,05%"
+        resDesc:
+          type: string
+          description: Описание результата
+          example: "Такое встречается лишь у людей"
+        resPic:
+          $ref: '#/components/schemas/Picture'
+
+    Test:
+      type: object
+      description: Тест
+      properties:
+        id:
+          type: integer
+          description: Идентификатор теста
+          example: 1
+        title:
+          type: string
+          description: Заголовок теста
+          example: "Кто ты из Наруто?"
+        description:
+          type: string
+          description: Описание теста
+          example: "Этот тест позволит определить какой вы покемон"
+        picture:
+          $ref: '#/components/schemas/Picture'
+        isPublished:
+          type: boolean
+          description: Тест опубликован
+          example: false
+        vip:
+          type: boolean
+          description: Текст доступен только vip-клиентам
+          example: true
+        price:
+          type: integer
+          description: Стоимость в монетках прохождения теста
+          example: 100
+        gender:
+          type: integer
+          description: Для какого пола теста. 0 - для всех, 1 - для мужчин, 2 - для женщин
+          example: 2
+        results:
+          type: array
+          description: Список результатов
+          items:
+            $ref: '#/components/schemas/Result'
+        question:
+          type: array
+          description: Список вопросов
+          items:
+            $ref: '#/components/schemas/Question'
+        user:
+          type: integer
+          description: Идентификатор пользователя ВКонтакте - создателя теста
+          example: 5293812
+
+    TestShort:
+      type: object
+      description: Тест
+      properties:
+        id:
+          type: integer
+          description: Идентификатор теста
+          example: 1
+        title:
+          type: string
+          description: Заголовок теста
+          example: "Кто ты из Наруто?"
+        description:
+          type: string
+          description: Описание теста
+          example: "Этот тест позволит определить какой вы покемон"
+        picture:
+          $ref: '#/components/schemas/Picture'
+        isPublished:
+          type: boolean
+          description: Тест опубликован
+          example: false
+        vip:
+          type: boolean
+          description: Текст доступен только vip-клиентам
+          example: true
+        price:
+          type: integer
+          description: Стоимость в монетках прохождения теста
+          example: 100
+        gender:
+          type: integer
+          description: Для какого пола теста. 0 - для всех, 1 - для мужчин, 2 - для женщин
+          example: 2
+        user:
+          type: integer
+          description: Идентификатор пользователя ВКонтакте - создателя теста
+          example: 5293812
+
+    Errors:
+      description: >-
+        Ответ может содержать либо общий текст ошибки (message), либо список
+        ошибок по полям формы (fields)
+      properties:
+        message:
+          example: пример
+          oneOf:
+            - type: string
+              description: описание
+              example: пример
+            - type: object
+              description: описание
+              properties:
+                title:
+                  type: string
+                  description: описание
+                  example: пример
+                text:
+                  type: string
+                  example: пример
+        fields:
+          type: object
+          description: описание
+          properties:
+            form_field_1:
+              type: string
+              description: описание form_field_1
+              example: Обязательное значение
+            form_field_2:
+              type: string
+              description: описание form_field_2
+              example: Неверное значение
+            form_field_N:
+              type: string
+              description: описание form_field_3
+              example: Значение не соответствует правилам
+
+    PaginationMetadata:
+      type: object
+      properties:
+        page:
+          type: integer
+          description: Номер текущей страницы
+          example: 1
+        page_size:
+          type: integer
+          description: Текущий размер страниц
+          example: 20
+        total_pages:
+          type: integer
+          description: Всего страниц
+          example: 3
+        total_items:
+          type: integer
+          description: Всего объектов
+          example: 43
+        max_page_size:
+          type: integer
+          description: Максимальный размер страницы
+          example: 40
+
+  parameters:
+    PaginationPage:
+      in: query
+      name: page
+      schema:
+        type: integer
+        default: 1
+      description: Номер страницы
+
+    PaginationPerPage:
+      in: query
+      name: page_size
+      schema:
+        type: integer
+        default: 1
+      description: Количество записей на странице
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
