@@ -65,6 +65,9 @@ paths:
       tags:
         - Тесты
       summary: Получение списка тестов
+      parameters:
+        - $ref: '#/components/parameters/PaginationPage'
+        - $ref: '#/components/parameters/PaginationPerPage'
       responses:
         '200':
           description: Успешная обработка запроса
@@ -104,6 +107,9 @@ paths:
       tags:
         - Тесты
       summary: Получение тестов текущего пользователя
+      parameters:
+        - $ref: '#/components/parameters/PaginationPage'
+        - $ref: '#/components/parameters/PaginationPerPage'
       security:
         - bearerAuth: []
       responses:
