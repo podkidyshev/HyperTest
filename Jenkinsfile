@@ -50,7 +50,7 @@ pipeline {
 
         stage('make artifacts') {
             steps {
-                sh 'tar -czf artifacts.tar.gz ssl/ front/ src/ docker* requirements/ Dockerfile Jenkinsfile'
+                sh 'tar -czf artifacts.tar.gz ssl/ docs/ front/ src/ docker* requirements/ Dockerfile Jenkinsfile'
             }
         }
 
@@ -66,7 +66,7 @@ pipeline {
                             ls && \
                             docker-compose -f docker-compose.prod.yaml down --remove-orphans && \
                             docker-compose rm && \
-                            rm -rf front/ src/ docker* requirements/ Dockerfile Jenkinsfile && \
+                            rm -rf docs/ front/ src/ docker* requirements/ Dockerfile Jenkinsfile && \
                             gunzip -c artifacts.tar.gz | tar xopf - && \
                             rm -rf artifacts.tar.gz && \
                             ls && \

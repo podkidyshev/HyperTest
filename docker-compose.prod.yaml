@@ -44,6 +44,16 @@ services:
     depends_on:
       - db
 
+  swagger:
+    image: swaggerapi/swagger-ui
+    container_name: "hypertest-swagger"
+    ports:
+      - "8081:8080"
+    volumes:
+      - "./docs/swagger.yaml:/index.yaml"
+    environment:
+      SWAGGER_JSON: /index.yaml
+
 
 volumes:
   static:
