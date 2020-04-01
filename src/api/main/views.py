@@ -16,19 +16,18 @@ class TestView(ModelViewSet):
 
     pagination_class = Pagination
     serializer_class = TestSerializer
-    # queryset = Test.objects.filter(published=True).order_by('-id')
 
     def get_serializer_class(self):
         if self.action == 'list':
             return TestShortSerializer
         return TestSerializer
 
-    # TODO: hardcode
     def get_queryset(self):
         if self.action == 'list':
             return Test.objects.filter(published=True).order_by('-id')
-        else:
+        if self.action == 'create':
             return Test.objects.all()
+        return Test.objects.filter(user=self.request.user)
 
 
 class MyTestsView(ListAPIView):

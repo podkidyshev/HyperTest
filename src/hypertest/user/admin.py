@@ -3,7 +3,7 @@ from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.forms import UserCreationForm
 from django.utils.translation import ugettext as _
 
-from .models import User
+from .models import User, VKUser, VKUserToken
 
 
 class CustomUserCreationForm(UserCreationForm):
@@ -39,3 +39,5 @@ class CustomUserAdmin(UserAdmin):
 
 
 admin.site.register(User, CustomUserAdmin)
+admin.site.register(VKUser)
+admin.site.register(VKUserToken)

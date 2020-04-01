@@ -123,3 +123,6 @@ class VKUserToken(models.Model):
         db_table = 'vk_user_token'
         verbose_name = _('VK user\'s token')
         verbose_name_plural = _('VK users\' tokens')
+
+    def __str__(self):
+        return f'User id: {self.user.id}'
