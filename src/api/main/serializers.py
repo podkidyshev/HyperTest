@@ -7,8 +7,8 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import SkipField
 
-from hypertest.main.models import Test, Result, Question, Answer
-
+from hypertest.main.models import Test, Result, Question, Answer, TestPass
+from hypertest.user.models import VKUser
 
 ID_ERROR_MESSAGES = {
     'required': 'Это поле обязательно',
@@ -335,20 +335,30 @@ class QuestionListField(serializers.ListField):
         return [self.representation_serializer.to_representation(item) for item in data.all()]
 
 
-class TestSerializer(serializers.ModelSerializer):
+class PassedMixin:
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+
+        user = self.context['request'].user
+        if isinstance(user, VKUser):
+            data['passed'] = TestPass.objects.filter(test=self.instance, user=self.context['request'].user).exists()
+
+        return data
+
+
+class TestSerializer(PassedMixin, serializers.ModelSerializer,):
     isPublished = serializers.BooleanField(source='published', default=False)
+    passedCount = serializers.IntegerField(source='passed_count', default=0)
 
     picture = PictureField(allow_null=True, default=None, required=False)
     results = ResultListField()
     questions = QuestionListField()
 
-    passed = serializers.IntegerField()  # must be annotated to queryset
-
     class Meta:
         model = Test
         fields = ['id', 'title', 'description', 'picture', 'isPublished', 'vip', 'price', 'gender', 'results',
-                  'questions', 'user', 'passed']
-        read_only_fields = ['id', 'user', 'passed']
+                  'questions', 'user', 'passedCount']
+        read_only_fields = ['id', 'user', 'passed_count']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -415,14 +425,13 @@ class TestSerializer(serializers.ModelSerializer):
         return test
 
 
-class TestShortSerializer(serializers.ModelSerializer):
+class TestShortSerializer(PassedMixin, serializers.ModelSerializer):
     isPublished = serializers.BooleanField(source='published', default=False)
+    passedCount = serializers.IntegerField(source='passed_count')
     picture = PictureField(allow_null=True, default=None, required=False)
-
-    passed = serializers.IntegerField()  # must be annotated to queryset
 
     class Meta:
         model = Test
         fields = ['id', 'title', 'description', 'picture', 'isPublished', 'vip', 'price', 'gender', 'user',
-                  'passed']
-        read_only_fields = ['id', 'user', 'passed']
+                  'passedCount']
+        read_only_fields = ['id', 'user', 'passedCount']

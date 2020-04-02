@@ -23,6 +23,9 @@ class Test(models.Model):
     user = models.ForeignKey(VKUser, on_delete=models.SET_NULL, related_name='tests', verbose_name=_('Creator'),
                              blank=True, null=True)
 
+    # Anyway it's not correct - it should be annotated every time
+    passed_count = models.IntegerField(_('Passed count'), default=0)
+
     class Meta:
         db_table = 'test'
         verbose_name = _('Test')
