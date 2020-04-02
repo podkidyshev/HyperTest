@@ -82,21 +82,22 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/TestShort'
-
-    post:
+  /api/tests/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Идетификатор теста
+        schema:
+          type: integer
+          example: 1
+    get:
       tags:
         - Тесты
-      summary: Создание теста
-      security:
-        - bearerAuth: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Test'
+      summary: Получение детализированного объекта теста
       responses:
         '200':
-          description: Тест создан
+          description: Успешная обработка запроса
           content:
             application/json:
               schema:
@@ -126,8 +127,26 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/TestShort'
+    post:
+      tags:
+        - Тесты
+      summary: Создание теста
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Test'
+      responses:
+        '200':
+          description: Тест создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Test'
 
-  /api/tests/{id}:
+  /api/tests/my/{id}:
     parameters:
       - name: id
         in: path

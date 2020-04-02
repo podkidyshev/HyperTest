@@ -341,14 +341,14 @@ class PassedMixin:
 
         user = self.context['request'].user
         if isinstance(user, VKUser):
-            data['passed'] = TestPass.objects.filter(test=self.instance, user=self.context['request'].user).exists()
+            data['passed'] = TestPass.objects.filter(test_id=data['id'], user=user).exists()
 
         return data
 
 
 class TestSerializer(PassedMixin, serializers.ModelSerializer,):
     isPublished = serializers.BooleanField(source='published', default=False)
-    passedCount = serializers.IntegerField(source='passed_count', default=0)
+    passedCount = serializers.IntegerField(source='passed_count', default=0, read_only=True)
 
     picture = PictureField(allow_null=True, default=None, required=False)
     results = ResultListField()
@@ -358,7 +358,7 @@ class TestSerializer(PassedMixin, serializers.ModelSerializer,):
         model = Test
         fields = ['id', 'title', 'description', 'picture', 'isPublished', 'vip', 'price', 'gender', 'results',
                   'questions', 'user', 'passedCount']
-        read_only_fields = ['id', 'user', 'passed_count']
+        read_only_fields = ['id', 'user', 'passedCount']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -427,7 +427,7 @@ class TestSerializer(PassedMixin, serializers.ModelSerializer,):
 
 class TestShortSerializer(PassedMixin, serializers.ModelSerializer):
     isPublished = serializers.BooleanField(source='published', default=False)
-    passedCount = serializers.IntegerField(source='passed_count')
+    passedCount = serializers.IntegerField(source='passed_count', read_only=True)
     picture = PictureField(allow_null=True, default=None, required=False)
 
     class Meta:
