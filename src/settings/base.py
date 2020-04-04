@@ -115,6 +115,15 @@ REST_FRAMEWORK = {
     'NON_FIELD_ERRORS_KEY': 'message',
     'EXCEPTION_HANDLER': 'api.exceptions.exception_handler',
     'DEFAULT_PAGINATION_CLASS': 'api.pagination.Pagination',
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend'
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated'
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'api.auth.VKUserAuthentication',
+    ]
 }
 
 
