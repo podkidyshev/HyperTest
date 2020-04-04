@@ -12,3 +12,12 @@ class AuthenticatedTestCase(APITestCase):
 
     def setUp(self) -> None:
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.token}')
+
+    def change_user(self, user=None):
+        # it affects only current test
+        if user is None:
+            self.user, _ = VKUser.objects.get_or_create(id=self.user.id + 1)
+        else:
+            self.user = user
+        self.token = VKUserToken.objects.get_or_create(user=self.user)[0].token
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.token}')

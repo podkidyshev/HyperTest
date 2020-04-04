@@ -4,7 +4,7 @@ from copy import deepcopy
 
 from rest_framework.reverse import reverse
 
-from hypertest.main.models import Test, Result, Question, Answer
+from hypertest.main.models import Test, Result, Question, Answer, TestPass
 from tests.api.client import AuthenticatedTestCase
 
 
@@ -146,6 +146,20 @@ class HyperTestTestCase(AuthenticatedTestCase):
         # create another one and check number of related
         self.client.post(self.url_my, self.template, format='json')
         self.assert_objects_count(2, 4, 4, 8)
+
+    def test_short_serializer(self):
+        data = self.client.post(self.url_my, self.template, format='json').json()
+        test = Test.objects.get(pk=data['id'])
+        test.published = True
+        test.save()
+
+        for url in [self.url, self.url_my]:
+            list_data = self.client.get(url).json()['items'][0]
+            expected_data = self.make_expected_data(list_data)
+            expected_data.pop('questions')
+            expected_data.pop('results')
+            expected_data['isPublished'] = True
+            self.assertEqual(list_data, expected_data)
 
     def test_lists(self):
         test_data_1 = self.client.post(self.url_my, self.template, format='json').json()
@@ -307,3 +321,53 @@ class HyperTestTestCase(AuthenticatedTestCase):
         response = self.client.put(url, data, format='json')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['picture'], None)
+
+    def test_pass_test(self):
+        test = Test.objects.create(user=self.user, published=False)
+        url_pass = reverse('tests-pass', [test.id])
+
+        # user can pass his own test even if it is not published
+        self.client.post(url_pass)
+        test.refresh_from_db()
+        self.assertEqual(test.passed_count, 1)
+
+        # test that it ignores repeated passes
+        self.client.post(url_pass)
+        test.refresh_from_db()
+        self.assertEqual(test.passed_count, 1)
+
+        # test that non-owner can't pass not-published test
+        self.change_user()
+        response = self.client.post(url_pass)
+        self.assertEqual(response.status_code, 404)
+
+    def test_filters(self):
+        test = Test.objects.create(user=self.user, published=True)
+        TestPass.objects.create(user=self.user, test=test)
+
+        results = [
+            (self.url, 1),
+            (self.url + '?isPublished=0', 0),
+            (self.url + '?passed=0', 0),
+            (self.url + '?passed=1&isPublished=0', 0),
+            (self.url + '?passed=1&isPublished=1', 1),
+        ]
+
+        results_another_user = [
+            (self.url, 1),
+            (self.url + '?isPublished=0', 0),
+            (self.url + '?passed=0', 1),
+            (self.url + '?passed=1&isPublished=0', 0),
+            (self.url + '?passed=1&isPublished=1', 0),
+        ]
+
+        def _check_filter(_uri, _count):
+            self.assertEqual(len(self.client.get(_uri).json()['items']), _count)
+
+        for uri, count in results:
+            _check_filter(uri, count)
+
+        self.change_user()
+
+        for uri, count in results_another_user:
+            _check_filter(uri, count)
