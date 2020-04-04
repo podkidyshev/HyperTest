@@ -1,3 +1,15 @@
+"""
+/api/tests           -> provides only GET method to list published=True tests
+/api/tests/{id}      -> provides only GET method to retrieve detail published=True test
+/api/tests/{id}/pass -> mark test.id={id} as passed by current (authenticated) user
+
+/api/tests/my        -> GET  -> list all tests created by current user (test.user = self.request.user)
+                     -> POST -> create new test with test.user = self.request.user and published = False
+
+/api/tests/my/{id}   -> GET -> retrieve current user's test (test.user = self.request.user)
+                     -> PUT -> update test
+                     -> DELETE -> delete test
+"""
 from django.urls import path
 
 import api.main as main

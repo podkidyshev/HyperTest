@@ -1,17 +1,13 @@
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import AllowAny
 
 from hypertest.user.models import VKUser, VKUserToken
 from api.user.serializers import VKUserSerializer
-from api.auth import VKUserAuthentication
 
 
 class VKUserView(APIView):
-    authentication_classes = [VKUserAuthentication]
-    permission_classes = [IsAuthenticated]
-
     def get(self, request):
         return Response(VKUserSerializer(instance=request.user).data)
 
