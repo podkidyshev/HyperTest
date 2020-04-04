@@ -19,6 +19,10 @@ class VKUserAuthentication(BaseAuthentication):
             msg = 'Invalid token header. Token string should not contain invalid characters.'
             raise AuthenticationFailed(msg)
 
+        # fronent hack
+        if token == 'null':
+            return None
+
         return self.authenticate_credentials(token)
 
     def authenticate_credentials(self, token):
