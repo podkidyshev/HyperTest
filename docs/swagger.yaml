@@ -68,6 +68,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/PaginationPage'
         - $ref: '#/components/parameters/PaginationPerPage'
+        - $ref: '#/components/parameters/TestIsPublished'
+        - $ref: '#/components/parameters/TestIsPassed'
       responses:
         '200':
           description: Успешная обработка запроса
@@ -111,6 +113,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/PaginationPage'
         - $ref: '#/components/parameters/PaginationPerPage'
+        - $ref: '#/components/parameters/TestIsPublished'
+        - $ref: '#/components/parameters/TestIsPassed'
       security:
         - bearerAuth: []
       responses:
@@ -352,10 +356,14 @@ components:
           example: 5293812
           readOnly: true
         passed:
-          type: integer
-          description: Количество людей, прошедших тест
-          example: 2
+          type: boolean
+          description: Тест пройден текущим пользователем
+          example: true
           readOnly: true
+        passedCount:
+          type: integer
+          description: Сколько человек прошло тест
+          example: 1
       required:
         - title
         - questions
@@ -402,10 +410,14 @@ components:
           example: 5293812
           readOnly: true
         passed:
-          type: integer
-          description: Количество людей, прошедших тест
-          example: 2
+          type: boolean
+          description: Тест пройден текущим пользователем
+          example: true
           readOnly: true
+        passedCount:
+          type: integer
+          description: Сколько человек прошло тест
+          example: 1
 
     Errors:
       description: >-
@@ -485,6 +497,22 @@ components:
         type: integer
         default: 1
       description: Количество записей на странице
+
+    TestIsPublished:
+      in: query
+      name: isPublished
+      schema:
+        type: string
+        enum: ['1', '0', 'true', 'false']
+      description: Фильтр по опубликованности тестов. Регистр значения не важен
+
+    TestIsPassed:
+      in: query
+      name: passed
+      schema:
+        type: string
+        enum: ['1', '0', 'true', 'false']
+      description: Фильтр по пройденным тестам. Регистр значения не важен
 
   securitySchemes:
     bearerAuth:

@@ -1,17 +1,28 @@
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Q, Exists
 
 from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.views import APIView
 
+from django_filters.rest_framework import FilterSet, BooleanFilter
+
 from hypertest.main.models import Test, TestPass
 
 from .serializers import TestSerializer, TestShortSerializer
 
 
+class TestFilter(FilterSet):
+    isPublished = BooleanFilter('published')
+    passed = BooleanFilter(method='filter_passed')
+
+    def filter_passed(self, queryset, name, value):
+        return queryset.filter(Exists(TestPass.objects.filter(user=self.request.user), negated=not value))
+
+
 class TestView(ModelViewSet):
+    filterset_class = TestFilter
     queryset = Test.objects.filter(published=True)
 
     def get_serializer_class(self):
@@ -21,6 +32,8 @@ class TestView(ModelViewSet):
 
 
 class MyTestsView(ModelViewSet):
+    filterset_class = TestFilter
+
     def get_queryset(self):
         return Test.objects.filter(user=self.request.user)
 
