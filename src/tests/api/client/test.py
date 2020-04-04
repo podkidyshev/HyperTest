@@ -3,13 +3,46 @@ import os
 from copy import deepcopy
 
 from rest_framework.reverse import reverse
-from rest_framework.test import APITestCase
 
 from hypertest.main.models import Test, Result, Question, Answer
+from tests.api.client import AuthenticatedTestCase
 
 
-class HyperTestTestCase(APITestCase):
+class AvailableMethodsTestCase(AuthenticatedTestCase):
     url = reverse('tests-list')
+    url_my = reverse('tests-my-list')
+
+    def test_tests(self):
+        # make it appear in /api/tests/{id} and /api/tests/my/{id}
+        test = Test.objects.create(published=True, user=self.user)
+        url_test = reverse('tests-detail', [test.id])
+        url_my_test = reverse('tests-my-detail', [test.id])
+
+        privacy = [
+            ('get', self.url, 200),
+            ('post', self.url, 405),
+            ('get', url_test, 200),
+            ('put', url_test, 405),
+            ('patch', url_test, 405),
+            ('delete', url_test, 405),
+
+            ('get', self.url_my, 200),
+            ('post', self.url_my, 400),
+            ('get', url_my_test, 200),
+            ('patch', url_my_test, 405),
+            ('put', url_my_test, 400),
+
+            # the last one that deletes test
+            ('delete', url_my_test, 204)
+        ]
+
+        for method, uri, status_code in privacy:
+            self.assertEqual(getattr(self.client, method)(uri).status_code, status_code, f'{method, uri, status_code}')
+
+
+class HyperTestTestCase(AuthenticatedTestCase):
+    url = reverse('tests-list')
+    url_my = reverse('tests-my-list')
 
     template = {
         'title': 'title',
