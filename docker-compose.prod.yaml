@@ -2,8 +2,8 @@ version: '3'
 
 services:
   nginx:
-    build:
-      context: docker/nginx
+    container_name: "hypertest-nginx"
+    build: docker/nginx
     ports:
       - "443:443"
       - "80:80"
@@ -20,6 +20,7 @@ services:
       - back
 
   db:
+    container_name: "hypertest-db"
     image: postgres:12-alpine
     environment:
       - POSTGRES_DB=hypertest
@@ -32,6 +33,7 @@ services:
       - ./var/pg_data:/var/lib/postgresql/data
 
   back:
+    container_name: "hypertest-back"
     build: .
     volumes:
       - ./src:/code/src
@@ -45,8 +47,8 @@ services:
       - db
 
   swagger:
-    image: swaggerapi/swagger-ui
     container_name: "hypertest-swagger"
+    image: swaggerapi/swagger-ui
     ports:
       - "8081:8080"
     volumes:
