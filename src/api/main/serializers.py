@@ -37,6 +37,7 @@ class TestElementListField(serializers.ListField):
         super().__init__(*args, **kwargs)
 
         self.representation_serializer = self.serializer(context=self.root.context)
+        self.representation_serializer.parent = self
 
     def validate_id_field(self, value):
         try:
