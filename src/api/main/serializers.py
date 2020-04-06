@@ -1,15 +1,16 @@
-import base64
-import binascii
+from typing import Type
 
-from django.core.files.base import ContentFile
 from django.db.models import Q
 from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-from rest_framework.fields import SkipField
 
 from hypertest.main.models import Test, Result, Question, Answer, TestPass
 from hypertest.user.models import VKUser
+
+from api.main.fields import PictureField
+from api.common import prettify_validation_error
+
 
 ID_ERROR_MESSAGES = {
     'required': 'Это поле обязательно',
@@ -19,75 +20,88 @@ ID_ERROR_MESSAGES = {
 }
 
 
-def prettify_validation_error(err_detail):
-    if isinstance(err_detail, list):
-        return err_detail[0]
-    elif isinstance(err_detail, str):
-        return err_detail
+class TestElementListField(serializers.ListField):
+    id_field = serializers.IntegerField()
 
-    errors = {}
+    def __init__(self, serializer, id_field_name, model_id_field_name, parent_field_name, errors_hack=False,
+                 *args, **kwargs):
 
-    for field, value in err_detail.items():
-        if isinstance(value, str):
-            errors[field] = value
-            continue
+        self.serializer: Type[serializers.ModelSerializer] = serializer
+        self.model = getattr(self.serializer, 'Meta').model
 
-        if isinstance(value, list) and len(value):
-            errors[field] = value[0]
+        self.id_field_name: str = id_field_name
+        self.model_if_field_name: str = model_id_field_name
+        self.parent_field_name: str = parent_field_name
+        self.errors_hack: bool = errors_hack
 
-    return errors
+        super().__init__(*args, **kwargs)
 
+        self.representation_serializer = self.serializer(context=self.root.context)
 
-class PictureField(serializers.ImageField):
-    error_message = 'Некорретная строка base64, ожидаемый формат data:image/{формат};base64,{base64}. ' \
-                    'Чтобы удалить файл отправьте пустую строку'
-
-    def validate_empty_values(self, data):
-        if data == '':
-            return True, None
-        return super().validate_empty_values(data)
-
-    def to_internal_value(self, data):
-        if not isinstance(data, str):
-            return super().to_internal_value(data)
-
-        if data.startswith('http') and self.root.instance:
-            raise SkipField
-
-        return super().to_internal_value(self.deserialize_base64(data))
-
-    def deserialize_base64(self, data):
-        good = False
-
-        if ';base64,' in data and '/' in data:
-            ext, base64_str = data.split(';base64,')
-            if '/' in ext:
-                ext = ext.split('/')[-1]
-                try:
-                    data = ContentFile(base64.b64decode(base64_str), name='temp.' + ext)
-                    good = True
-                except binascii.Error:
-                    pass
-
-        if not good:
-            raise ValidationError(self.error_message)
-
-        return data
-
-    def to_representation(self, value):
-        if not value:
-            return None
-
+    def validate_id_field(self, value):
         try:
-            url = value.url
-        except AttributeError:
-            return None
+            value = self.id_field.to_internal_value(value)
+        except ValidationError:
+            msg = ID_ERROR_MESSAGES['incorrect_type'].format(typ=value.__class__.__name__, val=value)
+            raise ValidationError({self.id_field_name: msg})
 
-        request = self.context.get('request', None)
-        if request is not None:
-            return request.scheme + '://' + request.get_host() + '/' + value.url
+        if self.root.instance is not None:
+            lookup = {
+                self.model_if_field_name: value,
+                self.parent_field_name: self.parent.instance
+            }
+            try:
+                obj = self.model.objects.get(**lookup)
+            except self.model.DoesNotExist:
+                obj = None
 
-        return url
+            return obj
+
+    def run_obj_validation(self, data):
+        if self.id_field_name not in data:
+            raise ValidationError({self.id_field_name: ID_ERROR_MESSAGES['required']})
+
+        obj = self.validate_id_field(data[self.id_field_name])
+
+        serializer = self.serializer(instance=obj, data=data, context=self.root.context)
+        serializer.parent = self
+        serializer.is_valid(True)
+
+        return serializer
+
+    def run_child_validation(self, data):
+        objects = []
+        errors = {}
+        objects_ids = {}
+
+        for idx, item in enumerate(data):
+            try:
+                validated_obj = self.run_obj_validation(item)
+                objects.append(validated_obj)
+
+                obj_id = validated_obj.validated_data[self.model_if_field_name]
+                if obj_id in objects_ids:
+                    msg = ID_ERROR_MESSAGES['duplicates'].format(name=self.id_field_name)
+                    errors[idx] = errors[objects_ids[obj_id]] = msg
+                    continue
+                objects_ids[obj_id] = idx
+
+            except ValidationError as e:
+                errors[idx] = e.detail
+
+        if not errors:
+            return objects
+
+        errors = [prettify_validation_error(errors.get(idx, {})) for idx in range(len(data))]
+
+        # god damn
+        if self.errors_hack:
+            errors = [errors]
+
+        raise ValidationError(errors)
+
+    def to_representation(self, data):
+        return [self.representation_serializer.to_representation(item) for item in data.all()]
 
 
 class AnswerSerializer(serializers.ModelSerializer):
@@ -115,67 +129,16 @@ class AnswerSerializer(serializers.ModelSerializer):
         return data
 
 
-class AnswerListField(serializers.ListField):
-    answer_id_field = serializers.IntegerField()
-    representation_serializer = AnswerSerializer()
+class QuestionSerializer(serializers.ModelSerializer):
+    qId = serializers.IntegerField(source='question_id', required=True, allow_null=False)
+    qText = serializers.CharField(source='text', max_length=255, allow_blank=True, required=False)
+    qPic = PictureField(source='picture', allow_null=True, default=None, required=False)
 
-    def validate_answer_id(self, answer_id):
-        try:
-            answer_id = self.answer_id_field.to_internal_value(answer_id)
-        except ValidationError:
-            msg = ID_ERROR_MESSAGES['incorrect_type'].format(typ=answer_id.__class__.__name__, val=answer_id)
-            raise ValidationError({'varId': msg})
+    vars = TestElementListField(AnswerSerializer, 'varId', 'answer_id', 'question', True, source='answers')
 
-        if self.parent.instance is not None:
-            try:
-                answer = Answer.objects.get(answer_id=answer_id, question=self.parent.instance)
-            except Answer.DoesNotExist:
-                answer = None
-        else:
-            answer = None
-
-        return answer
-
-    def run_answer_validation(self, data):
-        if 'varId' not in data:
-            raise ValidationError({'varId': ID_ERROR_MESSAGES['required']})
-
-        answer = self.validate_answer_id(data['varId'])
-
-        serializer = AnswerSerializer(instance=answer, data=data, context=self.root.context)
-        serializer.parent = self.parent
-        serializer.is_valid(True)
-
-        return serializer
-
-    def run_child_validation(self, data):
-        result = []
-        errors = {}
-        answers_ids = {}
-
-        for idx, item in enumerate(data):
-            try:
-                validated_answer = self.run_answer_validation(item)
-                result.append(validated_answer)
-
-                # validate no result_id duplicates
-                answer_id = validated_answer.validated_data['answer_id']
-                if answer_id in answers_ids:
-                    errors[idx] = errors[answers_ids[answer_id]] = ID_ERROR_MESSAGES['duplicates'].format(name='varId')
-                    continue
-                answers_ids[answer_id] = idx
-            except ValidationError as e:
-                errors[idx] = e.detail
-
-        if not errors:
-            return result
-
-        errors = [prettify_validation_error(errors.get(idx, {})) for idx in range(len(data))]
-        raise ValidationError([errors])
-
-    def to_representation(self, data):
-        self.representation_serializer.context['request'] = self.context.get('request', None)
-        return [self.representation_serializer.to_representation(item) for item in data.all()]
+    class Meta:
+        model = Question
+        fields = ['qId', 'qText', 'qPic', 'vars']
 
 
 class ResultSerializer(serializers.ModelSerializer):
@@ -187,153 +150,6 @@ class ResultSerializer(serializers.ModelSerializer):
     class Meta:
         model = Result
         fields = ['resId', 'resText', 'resDesc', 'resPic']
-
-
-class ResultListField(serializers.ListField):
-    result_id_field = serializers.IntegerField()
-    representation_serializer = ResultSerializer()
-
-    def validate_result_id(self, result_id):
-        try:
-            result_id = self.result_id_field.to_internal_value(result_id)
-        except ValidationError:
-            msg = ID_ERROR_MESSAGES['incorrect_type'].format(typ=result_id.__class__.__name__, val=result_id)
-            raise ValidationError({'resId': msg})
-
-        if self.root.instance is not None:
-            try:
-                result = Result.objects.get(result_id=result_id, test=self.root.instance)
-            except Result.DoesNotExist:
-                result = None
-        else:
-            result = None
-
-        return result
-
-    def run_result_validation(self, data):
-        if 'resId' not in data:
-            raise ValidationError({'resId': ID_ERROR_MESSAGES['required']})
-
-        result = self.validate_result_id(data['resId'])
-
-        serializer = ResultSerializer(instance=result, data=data, context=self.root.context)
-        serializer.parent = self
-        serializer.is_valid(True)
-
-        return serializer
-
-    def run_child_validation(self, data):
-        result = []
-        errors = {}
-        results_ids = {}
-
-        for idx, item in enumerate(data):
-            try:
-                validated_result = self.run_result_validation(item)
-                result.append(validated_result)
-
-                # validate no result_id duplicates
-                result_id = validated_result.validated_data['result_id']
-                if result_id in results_ids:
-                    errors[idx] = errors[results_ids[result_id]] = ID_ERROR_MESSAGES['duplicates'].format(name='resId')
-                    continue
-                results_ids[result_id] = idx
-            except ValidationError as e:
-                errors[idx] = e.detail
-
-        if not errors:
-            return result
-
-        errors = [prettify_validation_error(errors.get(idx, {})) for idx in range(len(data))]
-        raise ValidationError(errors)
-
-    def to_internal_value(self, data):
-        data = super().to_internal_value(data)
-
-        # hack
-        # test_serializer: TestSerializer = self.root
-        # test_serializer.results_ids = [result.validated_data['result_id'] for result in data]
-
-        return data
-
-    def to_representation(self, data):
-        self.representation_serializer.context['request'] = self.context.get('request', None)
-        return [self.representation_serializer.to_representation(item) for item in data.all()]
-
-
-class QuestionSerializer(serializers.ModelSerializer):
-    qId = serializers.IntegerField(source='question_id', required=True, allow_null=False)
-    qText = serializers.CharField(source='text', max_length=255, allow_blank=True, required=False)
-    qPic = PictureField(source='picture', allow_null=True, default=None, required=False)
-
-    vars = AnswerListField(source='answers')
-
-    class Meta:
-        model = Question
-        fields = ['qId', 'qText', 'qPic', 'vars']
-
-
-class QuestionListField(serializers.ListField):
-    question_id_field = serializers.IntegerField()
-    representation_serializer = QuestionSerializer()
-
-    def validate_result_id(self, question_id):
-        try:
-            question_id = self.question_id_field.to_internal_value(question_id)
-        except ValidationError:
-            msg = ID_ERROR_MESSAGES['incorrect_type'].format(typ=question_id.__class__.__name__, val=question_id)
-            raise ValidationError({'qId': msg})
-
-        if self.root.instance is not None:
-            try:
-                question = Question.objects.get(question_id=question_id, test=self.root.instance)
-            except Question.DoesNotExist:
-                question = None
-        else:
-            question = None
-
-        return question
-
-    def run_question_validation(self, data):
-        if 'qId' not in data:
-            raise ValidationError({'qId': ID_ERROR_MESSAGES['required']})
-
-        question = self.validate_result_id(data['qId'])
-
-        serializer = QuestionSerializer(instance=question, data=data, context=self.root.context)
-        serializer.parent = self
-        serializer.is_valid(True)
-
-        return serializer
-
-    def run_child_validation(self, data):
-        result = []
-        errors = {}
-        questions_ids = {}
-
-        for idx, item in enumerate(data):
-            try:
-                validated_question = self.run_question_validation(item)
-                result.append(validated_question)
-
-                # validate no result_id duplicates
-                question_id = validated_question.validated_data['question_id']
-                if question_id in questions_ids:
-                    errors[idx] = errors[questions_ids[question_id]] = ID_ERROR_MESSAGES['duplicates'].format(name='qId')
-                    continue
-                questions_ids[question_id] = idx
-            except ValidationError as e:
-                errors[idx] = e.detail
-
-        if not errors:
-            return result
-
-        errors = [prettify_validation_error(errors.get(idx, {})) for idx in range(len(data))]
-        raise ValidationError(errors)
-
-    def to_representation(self, data):
-        self.representation_serializer.context['request'] = self.context.get('request', None)
-        return [self.representation_serializer.to_representation(item) for item in data.all()]
 
 
 class PassedMixin:
@@ -352,8 +168,10 @@ class TestSerializer(PassedMixin, serializers.ModelSerializer,):
     passedCount = serializers.IntegerField(source='passed_count', default=0, read_only=True)
 
     picture = PictureField(allow_null=True, default=None, required=False)
-    results = ResultListField()
-    questions = QuestionListField()
+    # results = ResultListField()
+    results = TestElementListField(ResultSerializer, 'resId', 'result_id', 'test')
+    # questions = QuestionListField()
+    questions = TestElementListField(QuestionSerializer, 'qId', 'question_id', 'test')
 
     class Meta:
         model = Test
