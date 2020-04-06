@@ -3,6 +3,7 @@ import binascii
 
 from django.core.files.base import ContentFile
 from django.db.models import Q
+from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import SkipField
@@ -376,6 +377,10 @@ class TestSerializer(PassedMixin, serializers.ModelSerializer,):
         # on creation test could be only published=False
         if not self.instance:
             attrs['published'] = False
+
+        # set publish_date if it is test publishing
+        if self.instance and attrs['published']:
+            attrs['publish_date'] = timezone.now()
 
         return attrs
 

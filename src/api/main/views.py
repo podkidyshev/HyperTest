@@ -1,5 +1,5 @@
 from django.db import transaction
-from django.db.models import Q, Exists
+from django.db.models import Q, Exists, F
 
 from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
@@ -10,7 +10,8 @@ from django_filters.rest_framework import FilterSet, BooleanFilter
 
 from hypertest.main.models import Test, TestPass
 
-from .serializers import TestSerializer, TestShortSerializer
+from api.main.serializers import TestSerializer, TestShortSerializer
+from api.permissions import UpdateTestPermission
 
 
 class TestFilter(FilterSet):
@@ -23,7 +24,7 @@ class TestFilter(FilterSet):
 
 class TestView(ModelViewSet):
     filterset_class = TestFilter
-    queryset = Test.objects.filter(published=True)
+    queryset = Test.objects.filter(published=True).order_by(F('publish_date').desc(nulls_last=True), '-id')
 
     def get_serializer_class(self):
         if self.action == 'list':
@@ -33,9 +34,10 @@ class TestView(ModelViewSet):
 
 class MyTestsView(ModelViewSet):
     filterset_class = TestFilter
+    permission_classes = ModelViewSet.permission_classes + [UpdateTestPermission]
 
     def get_queryset(self):
-        return Test.objects.filter(user=self.request.user)
+        return Test.objects.filter(user=self.request.user).order_by('-creation_date', '-id')
 
     def get_serializer_class(self):
         if self.action == 'list':

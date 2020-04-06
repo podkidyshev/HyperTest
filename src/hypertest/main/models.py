@@ -23,14 +23,17 @@ class Test(models.Model):
     user = models.ForeignKey(VKUser, on_delete=models.SET_NULL, related_name='tests', verbose_name=_('Creator'),
                              blank=True, null=True)
 
-    # Anyway it's not correct - it should be annotated every time
     passed_count = models.IntegerField(_('Passed count'), default=0)
+
+    publish_date = models.DateTimeField(_('Publish date'), null=True)
+    creation_date = models.DateTimeField(_('Creation date'), auto_now_add=True)
+    modification_date = models.DateTimeField(_('Modification date'), auto_now=True)
 
     class Meta:
         db_table = 'test'
         verbose_name = _('Test')
         verbose_name_plural = _('Tests')
-        ordering = ['-id']
+        # ordering = ['-id']
 
     def __str__(self):
         return self.title

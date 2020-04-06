@@ -30,7 +30,7 @@ class AvailableMethodsTestCase(AuthenticatedTestCase):
             ('post', self.url_my, 400),
             ('get', url_my_test, 200),
             ('patch', url_my_test, 405),
-            ('put', url_my_test, 400),
+            ('put', url_my_test, 403),  # test is published so it cannot be updated
 
             # the last one that deletes test
             ('delete', url_my_test, 204)
@@ -215,6 +215,7 @@ class HyperTestTestCase(AuthenticatedTestCase):
 
     def test_update(self):
         data = deepcopy(self.template)
+        data['isPublished'] = False
 
         test_id = self.client.post(self.url_my, data, format='json').json()['id']
         url = reverse('tests-my-detail', [test_id])
@@ -230,9 +231,7 @@ class HyperTestTestCase(AuthenticatedTestCase):
 
         self.assert_objects_count(2, 4, 4, 7)
         response_data = response.json()
-        expected_data = self.make_expected_data(response_data, template=response_data)
-        expected_data['isPublished'] = True
-        self.assertEqual(expected_data, response_data)
+        self.assertEqual(self.make_expected_data(response_data, template=response_data), response_data)
 
         # test incorrect result_id in answer (and put method)
         data['questions'][1]['vars'][0]['res'] = 100500
@@ -371,3 +370,17 @@ class HyperTestTestCase(AuthenticatedTestCase):
 
         for uri, count in results_another_user:
             _check_filter(uri, count)
+
+    def test_update_permission(self):
+        # on creation test is not published
+        data = self.client.post(self.url_my, self.template, format='json').json()
+        self.assertEqual(data['isPublished'], False)
+
+        url_my_test = reverse('tests-my-detail', [data['id']])
+
+        data = self.client.put(url_my_test, self.template, format='json').json()
+        self.assertEqual(data['isPublished'], True)
+
+        # you cannot update published test
+        response = self.client.put(url_my_test, self.template, format='json')
+        self.assertEqual(response.status_code, 403)
