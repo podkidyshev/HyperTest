@@ -26,4 +26,7 @@ urlpatterns = [
 
     path('tests/my', main.my_tests_list_view, name='tests-my-list'),
     path('tests/my/<int:pk>', main.my_tests_detail_view, name='tests-my-detail'),
+
+    path('tests/passed', main.passed_tests_list_view, name='tests-passed-list'),
+    path('tests/passed/<int:pk>', main.passed_tests_detail_view, name='tests-passed-detail'),
 ]

@@ -19,7 +19,7 @@ class TestFilter(FilterSet):
     passed = BooleanFilter(method='filter_passed')
 
     def filter_passed(self, queryset, name, value):
-        subquery = Exists(TestPass.objects.filter(user=self.request.user, test=OuterRef('pk')), negated=not value)
+        subquery = Exists(TestPass.objects.filter(test=OuterRef('pk')), negated=not value)
         return queryset.filter(subquery)
 
 
@@ -66,8 +66,22 @@ class TestPassView(APIView):
         return Response()
 
 
+class PassedTestsView(ModelViewSet):
+    def get_queryset(self):
+        subquery = TestPass.objects.filter(test_id=OuterRef('pk'), user=self.request.user)
+        return Test.objects.filter(Exists(subquery)).order_by(F('publish_date').desc(nulls_last=True), '-id')
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return TestShortSerializer
+        return TestSerializer
+
+
 test_list_view = TestView.as_view({'get': 'list'})
 test_detail_view = TestView.as_view({'get': 'retrieve'})
 
 my_tests_list_view = MyTestsView.as_view({'get': 'list', 'post': 'create'})
 my_tests_detail_view = MyTestsView.as_view({'get': 'retrieve', 'put': 'update', 'delete': 'destroy'})
+
+passed_tests_list_view = PassedTestsView.as_view({'get': 'list'})
+passed_tests_detail_view = PassedTestsView.as_view({'get': 'retrieve'})
