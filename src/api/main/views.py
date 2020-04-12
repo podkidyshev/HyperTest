@@ -67,14 +67,21 @@ class TestPassView(APIView):
 
 
 class PassedTestsView(ModelViewSet):
+    pagination_class = None
+
     def get_queryset(self):
         subquery = TestPass.objects.filter(test_id=OuterRef('pk'), user=self.request.user)
-        return Test.objects.filter(Exists(subquery)).order_by(F('publish_date').desc(nulls_last=True), '-id')
+        return Test.objects.filter(Exists(subquery)).order_by(F('publish_date').desc(nulls_last=True), '-id')[:6]
 
     def get_serializer_class(self):
         if self.action == 'list':
             return TestShortSerializer
         return TestSerializer
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({'items': serializer.data})
 
 
 test_list_view = TestView.as_view({'get': 'list'})

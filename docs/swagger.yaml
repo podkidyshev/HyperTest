@@ -218,9 +218,6 @@ paths:
       tags:
         - Пройденные тесты
       summary: Получение списка пройденных тестов
-      parameters:
-        - $ref: '#/components/parameters/PaginationPage'
-        - $ref: '#/components/parameters/PaginationPerPage'
       responses:
         '200':
           description: Успешная обработка запроса
@@ -229,8 +226,6 @@ paths:
               schema:
                 type: object
                 properties:
-                  _metadata:
-                    $ref: '#/components/schemas/PaginationMetadata'
                   items:
                     type: array
                     items:
