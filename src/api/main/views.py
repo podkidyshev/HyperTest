@@ -1,5 +1,5 @@
 from django.db import transaction
-from django.db.models import Q, Exists, F
+from django.db.models import Q, Exists, F, OuterRef
 
 from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
@@ -19,7 +19,8 @@ class TestFilter(FilterSet):
     passed = BooleanFilter(method='filter_passed')
 
     def filter_passed(self, queryset, name, value):
-        return queryset.filter(Exists(TestPass.objects.filter(user=self.request.user), negated=not value))
+        subquery = Exists(TestPass.objects.filter(user=self.request.user, test=OuterRef('pk')), negated=not value)
+        return queryset.filter(subquery)
 
 
 class TestView(ModelViewSet):
