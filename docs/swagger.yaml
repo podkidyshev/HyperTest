@@ -16,6 +16,7 @@ servers:
 tags:
   - name: Пользователи
   - name: Тесты
+  - name: Пройденные тесты
 
 paths:
   /api/auth:
@@ -212,6 +213,48 @@ paths:
         '204':
           description: Прохождение успешно засчитано
 
+  /api/tests/passed:
+    get:
+      tags:
+        - Пройденные тесты
+      summary: Получение списка пройденных тестов
+      parameters:
+        - $ref: '#/components/parameters/PaginationPage'
+        - $ref: '#/components/parameters/PaginationPerPage'
+      responses:
+        '200':
+          description: Успешная обработка запроса
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  _metadata:
+                    $ref: '#/components/schemas/PaginationMetadata'
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TestShort'
+  /api/tests/passed/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Идетификатор теста
+        schema:
+          type: integer
+          example: 1
+    get:
+      tags:
+        - Пройденные тесты
+      summary: Получение детализированного объекта теста
+      responses:
+        '200':
+          description: Успешная обработка запроса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Test'
 
 components:
   schemas:
