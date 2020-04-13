@@ -59,10 +59,12 @@ class TestPassView(APIView):
             'test': test
         }
         with transaction.atomic():
-            _, created = TestPass.objects.get_or_create(defaults, user=self.request.user, test=test)
+            test_pass, created = TestPass.objects.get_or_create(defaults, user=self.request.user, test=test)
             if created:
                 test.passed_count += 1
                 test.save()
+            else:
+                test_pass.save()
 
         return Response()
 

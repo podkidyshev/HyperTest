@@ -390,8 +390,8 @@ class PassedTestsTestCase(AuthenticatedTestCase):
     url_passed = reverse('tests-passed-list')
 
     def test_passed_view(self):
-        test_1 = Test.objects.create(title='test 1')
-        test_2 = Test.objects.create(title='test 2')
+        test_1 = Test.objects.create(title='test 1', user=self.user)
+        test_2 = Test.objects.create(title='test 2', user=self.user)
 
         # firstly test is not passed
         self.assertEqual(self.client.get(self.url_passed).json()['items'], [])
@@ -411,3 +411,8 @@ class PassedTestsTestCase(AuthenticatedTestCase):
         response = self.client.get(self.url_passed).json()
         self.assertEqual(len(response['items']), 2)
         self.assertEqual(response['items'][0]['id'], test_2.id)
+
+        # test update pass date
+        self.client.post(reverse('tests-pass', [test_1.id]))
+        response = self.client.get(self.url_passed).json()
+        self.assertEqual(response['items'][0]['id'], test_1.id)
