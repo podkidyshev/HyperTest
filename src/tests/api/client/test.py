@@ -384,3 +384,30 @@ class HyperTestTestCase(AuthenticatedTestCase):
         # you cannot update published test
         response = self.client.put(url_my_test, self.template, format='json')
         self.assertEqual(response.status_code, 403)
+
+
+class PassedTestsTestCase(AuthenticatedTestCase):
+    url_passed = reverse('tests-passed-list')
+
+    def test_passed_view(self):
+        test_1 = Test.objects.create(title='test 1')
+        test_2 = Test.objects.create(title='test 2')
+
+        # firstly test is not passed
+        self.assertEqual(self.client.get(self.url_passed).json()['items'], [])
+
+        TestPass.objects.create(test=test_1, user=self.user)
+
+        # now test presents in response
+        response = self.client.get(self.url_passed).json()
+        self.assertEqual(len(response['items']), 1)
+        self.assertEqual(response['items'][0]['id'], test_1.id)
+
+        # second test is not passed
+        self.assertEqual(self.client.get(reverse('tests-passed-detail', [test_2.id])).status_code, 404)
+
+        # now test view sorting
+        TestPass.objects.create(test=test_2, user=self.user)
+        response = self.client.get(self.url_passed).json()
+        self.assertEqual(len(response['items']), 2)
+        self.assertEqual(response['items'][0]['id'], test_2.id)

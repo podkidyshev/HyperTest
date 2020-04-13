@@ -96,11 +96,16 @@ class Answer(models.Model):
 class TestPass(models.Model):
     test = models.ForeignKey(verbose_name=_('Test'), to=Test, related_name='passes', on_delete=models.CASCADE)
     user = models.ForeignKey(verbose_name=_('VK User'), to=VKUser, related_name='tests_passed', on_delete=models.CASCADE)
+    date = models.DateTimeField(_('Pass date'), auto_now=True)
 
     class Meta:
         db_table = 'test_pass'
         verbose_name = _('Test pass')
         verbose_name_plural = _('Tests\' passes')
+
+        constraints = [
+            models.UniqueConstraint(fields=['test', 'user'], name='test_pass_unique_idx')
+        ]
 
     def __str__(self):
         return f'User: {self.user.id}, test: {self.test.title} ({self.test.id})'

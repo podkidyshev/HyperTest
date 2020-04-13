@@ -1,5 +1,5 @@
 from django.db import transaction
-from django.db.models import Q, Exists, F, OuterRef
+from django.db.models import Q, Exists, F, OuterRef, Subquery
 
 from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
@@ -49,6 +49,7 @@ class MyTestsView(ModelViewSet):
 class TestPassView(APIView):
     def post(self, request, pk):
         try:
+            # you can pass only published tests or your own tests
             test = Test.objects.get(Q(user=self.request.user) | Q(published=True), pk=pk)
         except Test.DoesNotExist:
             raise NotFound
@@ -71,7 +72,7 @@ class PassedTestsView(ModelViewSet):
 
     def get_queryset(self):
         subquery = TestPass.objects.filter(test_id=OuterRef('pk'), user=self.request.user)
-        return Test.objects.filter(Exists(subquery)).order_by(F('publish_date').desc(nulls_last=True), '-id')[:6]
+        return Test.objects.annotate(pass_date=Subquery(subquery.values('date'))).filter(pass_date__isnull=False).order_by('-pass_date', '-id')
 
     def get_serializer_class(self):
         if self.action == 'list':
@@ -80,7 +81,8 @@ class PassedTestsView(ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
-        serializer = self.get_serializer(queryset, many=True)
+        # get only last six
+        serializer = self.get_serializer(queryset[:6], many=True)
         return Response({'items': serializer.data})
 
 
