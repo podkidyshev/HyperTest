@@ -3,7 +3,10 @@ version: '3'
 services:
   nginx:
     container_name: "hypertest-nginx"
-    build: docker/nginx
+    build:
+      context: docker/nginx
+      args:
+        NGINX_DIR: conf.d
     ports:
       - "443:443"
       - "80:80"

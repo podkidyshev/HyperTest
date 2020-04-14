@@ -1,4 +1,5 @@
 FROM nginx:alpine
 
+ARG NGINX_DIR
 # config
-COPY conf.d /etc/nginx/conf.d
+COPY $NGINX_DIR /etc/nginx/conf.d
