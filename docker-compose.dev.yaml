@@ -1,0 +1,67 @@
+version: '3'
+
+services:
+  nginx:
+    container_name: "hypertest-dev-nginx"
+    build:
+      context: ./docker/nginx/
+      args:
+        NGINX_DIR: conf.d.dev
+    ports:
+      - "443:443"
+      - "80:80"
+    volumes:
+      - static-dev:/var/static
+      - ./media:/var/media
+      - ./log/nginx:/var/log/nginx
+      - ./ssl:/etc/ssl
+    restart: on-failure
+    depends_on:
+      - back
+      - front
+    links:
+      - back
+      - front
+
+  db:
+    container_name: "hypertest-dev-db"
+    image: postgres:12-alpine
+    environment:
+      - POSTGRES_DB=hypertest
+      - POSTGRES_USER=hypertest
+      - POSTGRES_PASSWORD=hypertest
+      - PGPASSWORD=hypertest
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./var/pg_data:/var/lib/postgresql/data
+
+  back:
+    container_name: "hypertest-dev-back"
+    build: .
+    volumes:
+      - ./src:/code/src
+      - static-dev:/code/static
+      - ./media:/code/media
+    expose:
+      - "8000"
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
+  front:
+    container_name: "hypertest-dev-front"
+    build:
+      context: ./front
+    volumes:
+      - ./front:/app
+      - front-node-modules-dev:/app/node_modules
+    expose:
+      - "3000"
+    ports:
+      - "3000:3000"
+
+volumes:
+  front-node-modules-dev:
+  static-dev:
