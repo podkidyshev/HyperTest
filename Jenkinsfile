@@ -40,7 +40,7 @@ pipeline {
 
         stage('build front') {
             steps {
-                sh 'cp docker/front/* front/'
+                sh 'cp docker/front/prod/* front/'
                 dir('front') {
                     sh 'bash ./build.sh'
                 }
