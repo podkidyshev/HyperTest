@@ -6,8 +6,10 @@
 
 src/settings/local.py
 
+# root docker folders
 media/
 log/
 ssl/
 static/
 postgres_data/
+var/
