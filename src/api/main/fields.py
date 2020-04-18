@@ -55,6 +55,6 @@ class PictureField(ImageField):
 
         request = self.context.get('request', None)
         if request is not None:
-            return request.scheme + '://' + request.get_host() + '/' + value.url
+            return request.META['HTTP_REFERER'] + '/' + value.url
 
         return url
