@@ -1,5 +1,7 @@
 FROM python:3.7-alpine
 
+ARG START_SCRIPT
+
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 DJANGO_SETTINGS_MODULE=settings.docker
 
 RUN apk update \
@@ -18,5 +20,5 @@ WORKDIR /code/src
 
 RUN mkdir -p /code/media && mkdir -p /code/static
 
-ARG START_SCRIPT
-ENTRYPOINT ["/bin/sh", "-c", "../$START_SCRIPT"]
+RUN mv ../${START_SCRIPT} ../start.sh
+ENTRYPOINT ["/bin/sh", "-c", "../start.sh"]
