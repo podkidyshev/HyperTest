@@ -37,7 +37,10 @@ services:
 
   back:
     container_name: "hypertest-back"
-    build: .
+    build:
+      context: .
+      args:
+        START_SCRIPT: start.sh
     volumes:
       - ./src:/code/src
       - static:/code/static

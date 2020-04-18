@@ -18,4 +18,5 @@ WORKDIR /code/src
 
 RUN mkdir -p /code/media && mkdir -p /code/static
 
-ENTRYPOINT ["/bin/sh", "-c", "../start.sh"]
+ARG START_SCRIPT
+ENTRYPOINT ["/bin/sh", "-c", "../$START_SCRIPT"]

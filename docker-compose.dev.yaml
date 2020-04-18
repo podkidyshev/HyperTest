@@ -38,7 +38,10 @@ services:
 
   back:
     container_name: "hypertest-dev-back"
-    build: .
+    build:
+      context: .
+      args:
+        START_SCRIPT: start.dev.sh
     volumes:
       - ./src:/code/src
       - static-dev:/code/static
