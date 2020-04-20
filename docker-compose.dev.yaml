@@ -65,6 +65,16 @@ services:
     ports:
       - "3000:3000"
 
+  swagger:
+    container_name: "hypertest-swagger"
+    image: swaggerapi/swagger-ui
+    ports:
+      - "8081:8080"
+    volumes:
+      - "./docs/swagger.yaml:/index.yaml"
+    environment:
+      SWAGGER_JSON: /index.yaml
+
 volumes:
   front-node-modules-dev:
   static-dev:
