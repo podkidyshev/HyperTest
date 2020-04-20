@@ -64,13 +64,13 @@ pipeline {
                         sh "ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} ${SSH_USER}@hypertests.ru '\
                             cd Projects/hypertest && \
                             ls && \
-                            ./setup-prod.sh && \
                             docker-compose down --remove-orphans && \
                             docker-compose rm && \
                             rm -rf docs/ front/ src/ docker* requirements/ Dockerfile Jenkinsfile && \
                             gunzip -c artifacts.tar.gz | tar xopf - && \
                             rm -rf artifacts.tar.gz && \
                             ls && \
+                            ./setup-prod.sh && \
                             docker-compose up -d --build && \
                             docker-compose logs && \
                             sleep 5 && \
