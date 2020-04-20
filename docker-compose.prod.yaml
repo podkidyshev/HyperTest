@@ -2,7 +2,7 @@ version: '3'
 
 services:
   nginx:
-    container_name: "hypertest-nginx"
+    container_name: "hypertest-prod-nginx"
     build:
       context: docker/nginx
       args:
@@ -23,7 +23,7 @@ services:
       - back
 
   db:
-    container_name: "hypertest-db"
+    container_name: "hypertest-prod-db"
     image: postgres:12-alpine
     environment:
       - POSTGRES_DB=hypertest
@@ -36,7 +36,7 @@ services:
       - ./var/pg_data:/var/lib/postgresql/data
 
   back:
-    container_name: "hypertest-back"
+    container_name: "hypertest-prod-back"
     build:
       context: .
       args:
@@ -53,7 +53,7 @@ services:
       - db
 
   swagger:
-    container_name: "hypertest-swagger"
+    container_name: "hypertest-prod-swagger"
     image: swaggerapi/swagger-ui
     ports:
       - "8081:8080"

@@ -50,7 +50,7 @@ pipeline {
 
         stage('make artifacts') {
             steps {
-                sh 'tar -czf artifacts.tar.gz ssl/ docs/ front/ src/ docker* requirements/ Dockerfile Jenkinsfile'
+                sh 'tar -czf artifacts.tar.gz ssl/ docs/ front/ src/ docker* requirements/ setup-prod.sh Dockerfile Jenkinsfile'
             }
         }
 
@@ -64,13 +64,14 @@ pipeline {
                         sh "ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} ${SSH_USER}@hypertests.ru '\
                             cd Projects/hypertest && \
                             ls && \
-                            docker-compose -f docker-compose.prod.yaml down --remove-orphans && \
+                            ./setup-prod.sh && \
+                            docker-compose down --remove-orphans && \
                             docker-compose rm && \
                             rm -rf docs/ front/ src/ docker* requirements/ Dockerfile Jenkinsfile && \
                             gunzip -c artifacts.tar.gz | tar xopf - && \
                             rm -rf artifacts.tar.gz && \
                             ls && \
-                            docker-compose -f docker-compose.prod.yaml up -d --build && \
+                            docker-compose up -d --build && \
                             docker-compose logs && \
                             sleep 5 && \
                             docker-compose logs && \
