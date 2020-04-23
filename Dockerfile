@@ -5,7 +5,7 @@ ARG START_SCRIPT
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 DJANGO_SETTINGS_MODULE=settings.docker
 
 RUN apk update \
-    && apk add --no-cache postgresql-dev gcc python3-dev musl-dev libc-dev linux-headers jpeg-dev zlib-dev
+    && apk add --no-cache postgresql-dev gcc python3-dev musl-dev libc-dev linux-headers jpeg-dev zlib-dev bash
 
 RUN mkdir /code
 WORKDIR /code

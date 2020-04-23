@@ -2,7 +2,7 @@ version: '3'
 
 services:
   db:
-    image: postgres
+    image: postgres:12-alpine
     environment:
       - POSTGRES_DB=hypertest
       - POSTGRES_USER=hypertest
@@ -14,7 +14,10 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   back:
-    build: .
+    build:
+      context: .
+      args:
+        START_SCRIPT: start.dev.sh
     volumes:
       - ./src:/code/src
     ports:
