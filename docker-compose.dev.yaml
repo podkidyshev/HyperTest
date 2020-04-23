@@ -2,28 +2,29 @@ version: '3'
 
 services:
   nginx:
-    container_name: "hypertest-prod-nginx"
+    container_name: "hypertest-dev-nginx"
     build:
-      context: docker/nginx
+      context: ./docker/nginx/
       args:
-        NGINX_DIR: conf.d
+        NGINX_DIR: conf.d.dev
     ports:
       - "443:443"
       - "80:80"
     volumes:
-      - static:/var/static
+      - static-dev:/var/static
       - ./media:/var/media
       - ./log/nginx:/var/log/nginx
       - ./ssl:/etc/ssl
-      - ./front/build:/etc/nginx/html
     restart: on-failure
     depends_on:
       - back
+      - front
     links:
       - back
+      - front
 
   db:
-    container_name: "hypertest-prod-db"
+    container_name: "hypertest-dev-db"
     image: postgres:12-alpine
     environment:
       - POSTGRES_DB=hypertest
@@ -36,14 +37,14 @@ services:
       - ./var/pg_data:/var/lib/postgresql/data
 
   back:
-    container_name: "hypertest-prod-back"
+    container_name: "hypertest-dev-back"
     build:
       context: .
       args:
-        START_SCRIPT: start.sh
+        START_SCRIPT: start.dev.sh
     volumes:
       - ./src:/code/src
-      - static:/code/static
+      - static-dev:/code/static
       - ./media:/code/media
     expose:
       - "8000"
@@ -52,8 +53,20 @@ services:
     depends_on:
       - db
 
+  front:
+    container_name: "hypertest-dev-front"
+    build:
+      context: ./front
+    volumes:
+      - ./front:/app
+      - front-node-modules-dev:/app/node_modules
+    expose:
+      - "3000"
+    ports:
+      - "3000:3000"
+
   swagger:
-    container_name: "hypertest-prod-swagger"
+    container_name: "hypertest-swagger"
     image: swaggerapi/swagger-ui
     ports:
       - "8081:8080"
@@ -62,6 +75,6 @@ services:
     environment:
       SWAGGER_JSON: /index.yaml
 
-
 volumes:
-  static:
+  front-node-modules-dev:
+  static-dev:

@@ -4,7 +4,7 @@ import os
 from base64 import b64encode
 from collections import OrderedDict
 from hmac import HMAC
-from urllib.parse import urlencode
+from urllib.parse import urlencode, parse_qsl, urlparse
 
 from django.conf import settings
 from django.contrib.auth.base_user import AbstractBaseUser
@@ -77,7 +77,7 @@ class VKUser(models.Model):
         if 'sign' not in params_dict:
             return None
 
-        decoded_hash_code = cls.get_query_hashcode(params_dict)
+        decoded_hash_code = cls.get_query_hashcode(query)
 
         if decoded_hash_code == params_dict['sign']:
             return VKUser.objects.get_or_create(id=params_dict['vk_user_id'])[0]
@@ -85,10 +85,12 @@ class VKUser(models.Model):
         return None
 
     @classmethod
-    def get_query_hashcode(cls, query: dict) -> bool:
+    def get_query_hashcode(cls, query_str: str) -> bool:
         """Check VK Apps signature"""
         secret = settings.VK['api_secret']
 
+        url = "http://query.ru/?" + query_str
+        query = dict(parse_qsl(urlparse(url).query, keep_blank_values=True))
         vk_subset = OrderedDict(sorted(x for x in query.items() if x[0][:3] == "vk_"))
         hash_code = b64encode(HMAC(secret.encode(), urlencode(vk_subset, doseq=True).encode(), hashlib.sha256).digest())
         decoded_hash_code = hash_code.decode('utf-8')[:-1].replace('+', '-').replace('/', '_')

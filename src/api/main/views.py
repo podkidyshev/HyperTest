@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.views import APIView
 
-from django_filters.rest_framework import FilterSet, BooleanFilter
+from django_filters.rest_framework import FilterSet, BooleanFilter, CharFilter
 
 from hypertest.main.models import Test, TestPass
 
@@ -17,10 +17,18 @@ from api.permissions import UpdateTestPermission
 class TestFilter(FilterSet):
     isPublished = BooleanFilter('published')
     passed = BooleanFilter(method='filter_passed')
+    gender = CharFilter(method='filter_gender')
 
     def filter_passed(self, queryset, name, value):
         subquery = Exists(TestPass.objects.filter(test=OuterRef('pk')), negated=not value)
         return queryset.filter(subquery)
+
+    def filter_gender(self, queryset, name, value):
+        if value == 'male':
+            return queryset.filter(Q(gender=0) | Q(gender=1))
+        elif value == 'female':
+            return queryset.filter(Q(gender=0) | Q(gender=2))
+        return queryset
 
 
 class TestView(ModelViewSet):

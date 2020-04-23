@@ -4,6 +4,11 @@
 pipeline {
     agent any
 
+    environment {
+        ARTIFACT_FILES = 'ssl/ docs/ front/ src/ docker* requirements/ setup-prod.sh Dockerfile Jenkinsfile'
+        REMOVE_FILES = 'docs/ front/ src/ docker* requirements/ setup-prod.sh Dockerfile Jenkinsfile'
+    }
+
     stages {
         stage('checkout front') {
             steps {
@@ -40,7 +45,7 @@ pipeline {
 
         stage('build front') {
             steps {
-                sh 'cp docker/front/* front/'
+                sh 'cp docker/front/prod/* front/'
                 dir('front') {
                     sh 'bash ./build.sh'
                 }
@@ -50,7 +55,7 @@ pipeline {
 
         stage('make artifacts') {
             steps {
-                sh 'tar -czf artifacts.tar.gz ssl/ docs/ front/ src/ docker* requirements/ Dockerfile Jenkinsfile'
+                sh 'tar -czf artifacts.tar.gz ${ARTIFACT_FILES}'
             }
         }
 
@@ -64,13 +69,14 @@ pipeline {
                         sh "ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} ${SSH_USER}@hypertests.ru '\
                             cd Projects/hypertest && \
                             ls && \
-                            docker-compose -f docker-compose.prod.yaml down --remove-orphans && \
+                            docker-compose down --remove-orphans && \
                             docker-compose rm && \
-                            rm -rf docs/ front/ src/ docker* requirements/ Dockerfile Jenkinsfile && \
+                            rm -rf ${REMOVE_FILES} && \
                             gunzip -c artifacts.tar.gz | tar xopf - && \
                             rm -rf artifacts.tar.gz && \
                             ls && \
-                            docker-compose -f docker-compose.prod.yaml up -d --build && \
+                            ./setup-prod.sh && \
+                            docker-compose up -d --build && \
                             docker-compose logs && \
                             sleep 5 && \
                             docker-compose logs && \
