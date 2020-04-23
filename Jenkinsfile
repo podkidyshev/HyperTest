@@ -4,6 +4,11 @@
 pipeline {
     agent any
 
+    environment {
+        ARTIFACT_FILES = 'ssl/ docs/ front/ src/ docker* requirements/ setup-prod.sh Dockerfile Jenkinsfile'
+        REMOVE_FILES = 'docs/ front/ src/ docker* requirements/ setup-prod.sh Dockerfile Jenkinsfile'
+    }
+
     stages {
         stage('checkout front') {
             steps {
@@ -50,7 +55,7 @@ pipeline {
 
         stage('make artifacts') {
             steps {
-                sh 'tar -czf artifacts.tar.gz ssl/ docs/ front/ src/ docker* requirements/ setup-prod.sh Dockerfile Jenkinsfile'
+                sh 'tar -czf artifacts.tar.gz ${ARTIFACT_FILES}'
             }
         }
 
@@ -66,7 +71,7 @@ pipeline {
                             ls && \
                             docker-compose down --remove-orphans && \
                             docker-compose rm && \
-                            rm -rf docs/ front/ src/ docker* requirements/ Dockerfile Jenkinsfile && \
+                            rm -rf ${REMOVE_FILES} && \
                             gunzip -c artifacts.tar.gz | tar xopf - && \
                             rm -rf artifacts.tar.gz && \
                             ls && \
