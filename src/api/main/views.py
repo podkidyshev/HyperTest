@@ -24,9 +24,9 @@ class TestFilter(FilterSet):
         return queryset.filter(subquery)
 
     def filter_gender(self, queryset, name, value):
-        if value == 'male':
+        if value == '2':  # male
             return queryset.filter(Q(gender=0) | Q(gender=1))
-        elif value == 'female':
+        elif value == '1':  # female
             return queryset.filter(Q(gender=0) | Q(gender=2))
         return queryset
 

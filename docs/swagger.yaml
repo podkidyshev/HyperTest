@@ -559,8 +559,8 @@ components:
       name: gender
       schema:
         type: string
-        enum: ['male', 'female']
-      description: Фильтр по полу (male + any/female + any)
+        enum: ['2', '1']
+      description: Фильтр по полу (male + any = 2/female + any = 1)
 
   securitySchemes:
     bearerAuth:
