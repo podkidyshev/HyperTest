@@ -71,6 +71,7 @@ paths:
         - $ref: '#/components/parameters/PaginationPerPage'
         - $ref: '#/components/parameters/TestIsPublished'
         - $ref: '#/components/parameters/TestIsPassed'
+        - $ref: '#/components/parameters/GenderFilter'
       responses:
         '200':
           description: Успешная обработка запроса
@@ -116,6 +117,7 @@ paths:
         - $ref: '#/components/parameters/PaginationPerPage'
         - $ref: '#/components/parameters/TestIsPublished'
         - $ref: '#/components/parameters/TestIsPassed'
+        - $ref: '#/components/parameters/GenderFilter'
       security:
         - bearerAuth: []
       responses:
@@ -551,6 +553,14 @@ components:
         type: string
         enum: ['1', '0', 'true', 'false']
       description: Фильтр по пройденным тестам. Регистр значения не важен
+
+    GenderFilter:
+      in: query
+      name: gender
+      schema:
+        type: string
+        enum: ['male', 'female']
+      description: Фильтр по полу (male + any/female + any)
 
   securitySchemes:
     bearerAuth:
